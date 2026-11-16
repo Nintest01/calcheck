@@ -12,3 +12,7 @@ Kiểm tra
 Chưa kiểm / lưu ý
 - Chưa chạy trong Chrome thật: Reload ở chrome://extensions rồi bấm Next ở bước 1.
 - Version local (2.34.0) đang cao hơn GitHub (2.33.0) tới khi push -> bước 1 báo lệch version trên máy này.
+
+fix: bước 1 chấp nhận link github.com/.../blob/... (popup/version.js tự đổi sang link raw trước khi fetch).
+- manifest.json: 2.34.0 -> 2.35.0 (tự nâng trên main; chưa push nên bước 1 sẽ báo lệch version trên máy này).
+- popup/session.js: lưu thêm version extension cùng form; khi extension được update (version khác) thì link GitHub đã lưu bị bỏ, dùng link mặc định mới (hết bị kẹt link Yagami cũ).

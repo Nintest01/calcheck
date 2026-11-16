@@ -102,15 +102,16 @@ export function sessionHasData() { return batchCases.length > 0 || CLEARABLE.som
 
 export function saveState() {
   const data = {}; FIELDS.forEach(f => data[f] = $(f).value);
-  chrome.storage.local.set({ form: data, session: { v: 1, savedAt: Date.now(), step: baseStep, ticket: sessionTicket, batch: batchCases, sel: batchSel ? Array.from(batchSel) : null, btags: $("batchTags").value, last: lastSummary.map(r => { const c = Object.assign({}, r); delete c.imageDataUrl; return c; }), extras: singleExtras, ai: aiState, jmsg: jiraMsgSnap() } });
+  chrome.storage.local.set({ ver: chrome.runtime.getManifest().version, form: data, session: { v: 1, savedAt: Date.now(), step: baseStep, ticket: sessionTicket, batch: batchCases, sel: batchSel ? Array.from(batchSel) : null, btags: $("batchTags").value, last: lastSummary.map(r => { const c = Object.assign({}, r); delete c.imageDataUrl; return c; }), extras: singleExtras, ai: aiState, jmsg: jiraMsgSnap() } });
 }
 
 export function loadState() {
-  return chrome.storage.local.get(["form", "session"]).then(({ form, session }) => {
+  return chrome.storage.local.get(["form", "session", "ver"]).then(({ form, session, ver }) => {
     form = form || {};
     FIELDS.forEach(f => { $(f).value = form[f] || ""; });
     if (!$("url").value) $("url").value = DEFAULT_URL;
-    if (!$("gitUrl").value) $("gitUrl").value = DEFAULT_GIT_URL;
+    // extension was updated since the form was saved: drop the saved GitHub link, use the current default
+    if (!$("gitUrl").value || ver !== chrome.runtime.getManifest().version) $("gitUrl").value = DEFAULT_GIT_URL;
     const fresh = session && session.v === 1 && (Date.now() - session.savedAt) < SESSION_TTL;
     if (session && !fresh) {                      // expired: drop the old ticket's values and list
       CLEARABLE.forEach(f => { $(f).value = ""; });

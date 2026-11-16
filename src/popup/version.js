@@ -16,7 +16,9 @@ export async function versionGate() {
   const btn = $("toForm"), label = btn.textContent, local = chrome.runtime.getManifest().version;
   btn.disabled = true; btn.textContent = "Checking version…"; gitErr("");
   try {
-    const res = await fetch($("gitUrl").value.trim(), { cache: "no-store" });
+    // a github.com/<user>/<repo>/blob/<path> page link is turned into its raw file link
+    const url = $("gitUrl").value.trim().replace(/^https:\/\/github\.com\/([^/]+\/[^/]+)\/blob\//, "https://raw.githubusercontent.com/$1/");
+    const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) throw new Error("HTTP " + res.status);
     const remote = manifestVersion(await res.text());
     if (!remote) throw new Error("no valid \"version\" in that file");
