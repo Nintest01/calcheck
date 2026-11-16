@@ -1,0 +1,16 @@
+feat (nhánh api): AI assist hiện "Under Development"; rule tự nâng version trên main
+
+Làm gì
+- popup/ai.js: thêm cờ AI_READY (đang false). Bật toggle "AI assist" chỉ hiện nhãn "Under Development",
+  không gọi AI, không so sánh; tool đọc ticket như cũ. Khi viết xong askAi() thì đổi cờ thành true.
+- CLAUDE.md mục 7: trên main, nếu version trong máy bằng version đã push (origin/main) và lần này có sửa
+  src/ hoặc manifest.json thì tự nâng số giữa (2.33.0 -> 2.34.0), một lần cho mỗi mốc push. Nhánh khác: không đổi.
+
+Kiểm tra
+- npm test: 7/7 qua.
+- Thử popup trên trang giả lập: bật toggle hiện "Under Development", Read vẫn điền form, tắt toggle thì ẩn.
+
+Chưa kiểm / lưu ý
+- Chưa chạy trong Chrome thật (cần Reload ở chrome://extensions).
+- Không đổi version: đang ở nhánh api.
+- Sau khi tự nâng version trên main mà chưa push, bước 1 sẽ báo lệch version trên máy đó.
