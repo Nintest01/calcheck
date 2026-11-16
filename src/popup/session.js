@@ -1,5 +1,5 @@
 // Popup state (single owner; others use the setters), session memory, single / batch mode.
-import { $, CLEARABLE, DEFAULT_GIT_URL, DEFAULT_URL, esc, FIELDS } from "./dom.js";
+import { $, CLEARABLE, DEFAULT_URL, esc, FIELDS } from "./dom.js";
 
 // ---- session memory: everything typed / read is saved as you go, so closing the popup never loses it ----
 const SESSION_TTL = 12 * 3600 * 1000;   // a saved session is dropped after 12 hours
@@ -25,7 +25,6 @@ export let lastSummary = [];     // latest result per case (re-checks replace on
 
 export let singleExtras = {};
 
-export let aiState = null;      // AI assist review of the current ticket (null = none)
 
 export function ticketKey() { const m = ($("jiraLink").value || "").match(/[A-Z][A-Z0-9]+-\d+/); return m ? m[0] : ""; } // Global/Repeat carried into single-mode CHECK (no UI fields)
 
@@ -102,16 +101,14 @@ export function sessionHasData() { return batchCases.length > 0 || CLEARABLE.som
 
 export function saveState() {
   const data = {}; FIELDS.forEach(f => data[f] = $(f).value);
-  chrome.storage.local.set({ ver: chrome.runtime.getManifest().version, form: data, session: { v: 1, savedAt: Date.now(), step: baseStep, ticket: sessionTicket, batch: batchCases, sel: batchSel ? Array.from(batchSel) : null, btags: $("batchTags").value, last: lastSummary.map(r => { const c = Object.assign({}, r); delete c.imageDataUrl; return c; }), extras: singleExtras, ai: aiState, jmsg: jiraMsgSnap() } });
+  chrome.storage.local.set({ form: data, session: { v: 1, savedAt: Date.now(), step: baseStep, ticket: sessionTicket, batch: batchCases, sel: batchSel ? Array.from(batchSel) : null, btags: $("batchTags").value, last: lastSummary.map(r => { const c = Object.assign({}, r); delete c.imageDataUrl; return c; }), extras: singleExtras, jmsg: jiraMsgSnap() } });
 }
 
 export function loadState() {
-  return chrome.storage.local.get(["form", "session", "ver"]).then(({ form, session, ver }) => {
+  return chrome.storage.local.get(["form", "session"]).then(({ form, session }) => {
     form = form || {};
     FIELDS.forEach(f => { $(f).value = form[f] || ""; });
     if (!$("url").value) $("url").value = DEFAULT_URL;
-    // extension was updated since the form was saved: drop the saved GitHub link, use the current default
-    if (!$("gitUrl").value || ver !== chrome.runtime.getManifest().version) $("gitUrl").value = DEFAULT_GIT_URL;
     const fresh = session && session.v === 1 && (Date.now() - session.savedAt) < SESSION_TTL;
     if (session && !fresh) {                      // expired: drop the old ticket's values and list
       CLEARABLE.forEach(f => { $(f).value = ""; });
@@ -120,7 +117,6 @@ export function loadState() {
     if (fresh) {
       restoredSession = session; sessionTicket = session.ticket || "";
       singleExtras = session.extras || {};
-      aiState = session.ai || null;
       if (session.jmsg) { const m = $("jiraMsg"); m.className = session.jmsg.cls; m.textContent = session.jmsg.text; m.classList.remove("hide"); }
       batchSel = session.sel ? new Set(session.sel) : null; lastSummary = session.last || []; $("batchTags").value = session.btags || "";
       if (session.batch && session.batch.length > 1) enterBatchMode(session.batch, true);
@@ -154,4 +150,3 @@ export function setBatchCases(v) { batchCases = v; }
 export function setBatchSel(v) { batchSel = v; }
 export function setLastSummary(v) { lastSummary = v; }
 export function setSingleExtras(v) { singleExtras = v; }
-export function setAiState(v) { aiState = v; }

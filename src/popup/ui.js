@@ -1,10 +1,9 @@
 // Popup entry: buttons, run check / batch, render results, resume a background run.
 import "./jira.js";   // registers the "Read Jira" button
-import { aiConfirmRun, clearAi, initAi } from "./ai.js";
 import { $, DEFAULT_URL, esc, FIELDS } from "./dom.js";
 import { dirHandle, ensureDirPermission, loadDir, writeToDir } from "./folder.js";
 import { batchCases, batchSel, caseKey, clearData, enterBatchMode, enterSingleMode, failedKeys, lastSummary, loadState, manualTagList, restoredSession, saveState, selectedCases, sessionTicket, setBatchCases, setBatchSel, setLastSummary, setRestoredSession, setSessionTicket, setSingleExtras, show, singleExtras, ticketKey, updateBatchUi, updateTagsNote } from "./session.js";
-import { syncGitUrlUi, versionGate } from "./version.js";
+import { versionGate } from "./version.js";
 
 let lastLogText = "";
 
@@ -13,11 +12,10 @@ $("toForm").onclick = async () => { const u = $("url").value.trim(); if (!u) { $
 
 $("backUrl").onclick = () => show("url");
 
-$("clearData").onclick = () => { clearRun(); clearAi(); clearData(true); const m = $("jiraMsg"); m.className = "jmsg info"; m.classList.remove("hide"); m.textContent = "Cleared (URL kept)."; saveState(); $("calId").focus(); };
+$("clearData").onclick = () => { clearRun(); clearData(true); const m = $("jiraMsg"); m.className = "jmsg info"; m.classList.remove("hide"); m.textContent = "Cleared (URL kept)."; saveState(); $("calId").focus(); };
 
 // =================== RUN CHECK ===================
 $("doCheck").onclick = async () => {
-  if (!aiConfirmRun()) return;
   const payload = {
     url: $("url").value.trim(),
     calId: $("calId").value.trim(),
@@ -118,7 +116,7 @@ FIELDS.forEach(f => $(f).addEventListener("input", saveState));
 loadDir();
 
 // ================= BATCH run =================
-$("clearBatch").onclick = () => { clearRun(); clearAi(); enterSingleMode(); const m = $("jiraMsg"); m.className = "jmsg info"; m.classList.remove("hide"); m.textContent = "Batch list cleared."; saveState(); };
+$("clearBatch").onclick = () => { clearRun(); enterSingleMode(); const m = $("jiraMsg"); m.className = "jmsg info"; m.classList.remove("hide"); m.textContent = "Batch list cleared."; saveState(); };
 
 $("backUrlB").onclick = () => show("url");
 
@@ -157,7 +155,6 @@ function withManualTags(list) {
 
 async function runSelected(restoreSel) {
   if (!batchCases.length) return;
-  if (!aiConfirmRun()) return;
   const toRun = selectedCases();
   if (!toRun.length) { $("batchErr").textContent = "Tick at least one program to check."; $("batchErr").classList.remove("hide"); return; }
   if (typeof restoreSel === "function") { restoreSel(); updateBatchUi(); saveState(); }   // a one-shot run (re-check failed) must not change your ticks
@@ -303,8 +300,6 @@ function startPoll() {
 function clearRun() { try { chrome.runtime.sendMessage({ action: "clearRunState" }); } catch (e) {} }
 
 loadState().then(async () => {
-  syncGitUrlUi();
-  initAi();
   let restored = false;
   try {
     const RUN = await chrome.runtime.sendMessage({ action: "getRunState" });
@@ -337,8 +332,8 @@ window.addEventListener("pagehide", saveState);
 $("resetSession").onclick = async () => {
   if (!confirm("Reset the session?\nThis clears the saved link, values and ticket list.")) return;
   clearRun();
-  FIELDS.forEach(f => { if (f !== "url" && f !== "gitUrl") $(f).value = ""; });
-  clearAi(); setSingleExtras({}); setBatchCases([]); setSessionTicket(""); setRestoredSession(null); $("batchTags").value = "";
+  FIELDS.forEach(f => { if (f !== "url") $(f).value = ""; });
+  setSingleExtras({}); setBatchCases([]); setSessionTicket(""); setRestoredSession(null); $("batchTags").value = "";
   enterSingleMode();
   const m = $("jiraMsg"); m.classList.add("hide"); m.textContent = "";
   $("sessNote").classList.add("hide");

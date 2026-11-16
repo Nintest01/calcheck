@@ -1,16 +1,16 @@
 // Popup DOM basics and field lists.
-import { AI_FIELDS } from "../core/ai.js";
 
 export const DEFAULT_URL = "https://design.km.globalworldwide.com/design/calendars";
 
 export const $ = (id) => document.getElementById(id);
 
-export const DEFAULT_GIT_URL = "https://raw.githubusercontent.com/Nintest01/calcheck/main/manifest.json";
+// fixed on purpose: the version source is not user-editable
+export const GIT_MANIFEST_URL = "https://raw.githubusercontent.com/Nintest01/calcheck/main/manifest.json";
+export const GIT_ZIP_URL = "https://github.com/Nintest01/calcheck/archive/refs/heads/main.zip";
 
-export const FIELDS = ["url", "gitUrl", "jiraLink", "calId", "progId", "flag", "event", "tags", "date", "time", "pre", "dur", "post"];
+export const FIELDS = ["url", "jiraLink", "calId", "progId", "flag", "event", "tags", "date", "time", "pre", "dur", "post"];
 
 export function esc(s) { return (s || "").replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m])); }
 
 // clear all comparison/nav fields (keep URL; jiraLink optional)
-// (one list: core/ai.js AI_FIELDS, so the AI targets always follow the form fields)
-export const CLEARABLE = AI_FIELDS.map(f => f.key);
+export const CLEARABLE = ["calId", "progId", "flag", "event", "tags", "date", "time", "pre", "dur", "post"];
