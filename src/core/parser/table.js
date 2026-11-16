@@ -142,7 +142,7 @@ export function parseTicketTable(doc, opts, rows) {
     const rws = block.dataRows;
     if (rws.length > 1) { const cell = rws[i] ? rws[i][ci] : null; return cell ? cell.lines.slice() : []; }
     const lines = (rws[0] && rws[0][ci]) ? rws[0][ci].lines : [];
-    if (lines.length <= 1) return lines.slice();      // single value → shared
+    if (lines.length <= 1 || N === 1) return lines.slice();      // single value → shared; one program owns every line
     if (lines.length >= N) return [lines[i]];         // stacked → per index
     return [lines[i] !== undefined ? lines[i] : lines[0]];
   };

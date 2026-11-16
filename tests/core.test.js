@@ -100,3 +100,11 @@ test("ai assist: prompt, reply reader, compare by value, merge", async () => {
   assert.deepEqual(merged.map(c => c.progId), ["fund.a", "fund.c", "cal.x"]);
   assert.equal(merged[0].repeatEvery, 2); assert.equal(merged[0].dur, "24h"); assert.equal(merged[2].calCheck, true);
 });
+
+test("parser: one program with two stacked tags keeps both", async () => {
+  const { readFileSync } = await import("node:fs");
+  const doc = JSON.parse(readFileSync(new URL("./fixtures/one-program-two-tags.json", import.meta.url), "utf8"));
+  const c = parseTicketV2(doc, { title: "iBP34 | Week 2 - Daily Login Fund 2" }).cases[0];
+  assert.equal(c.tags, "tag.fund.bp34v2.daily.w2, tag.fund.bp34v2.daily.w2.gift");
+  assert.equal(c.dur, "7d");
+});

@@ -16,3 +16,8 @@ Chưa kiểm / lưu ý
 fix: bước 1 chấp nhận link github.com/.../blob/... (popup/version.js tự đổi sang link raw trước khi fetch).
 - manifest.json: 2.34.0 -> 2.35.0 (tự nâng trên main; chưa push nên bước 1 sẽ báo lệch version trên máy này).
 - popup/session.js: lưu thêm version extension cùng form; khi extension được update (version khác) thì link GitHub đã lưu bị bỏ, dùng link mặc định mới (hết bị kẹt link Yagami cũ).
+
+fix: ticket có 1 program mà ô Tags có nhiều dòng thì bị rớt tag từ dòng 2 (ví dụ KM-63585 mất tag.fund.bp34v2.daily.w2.gift)
+- core/parser/table.js (valuesFor): khi chỉ có 1 program thì lấy hết các dòng của ô (lỗi này có sẵn từ bản v2.33).
+- tests: thêm test + tests/fixtures/one-program-two-tags.json (rút gọn từ KM-63585, đã bỏ link nội bộ). npm test 8/8.
+- manifest.json: 2.35.0 -> 2.36.0 (tự nâng trên main; chưa push nên bước 1 báo lệch version trên máy này).
