@@ -1,16 +1,14 @@
-feat (nhánh api): AI assist hiện "Under Development"; rule tự nâng version trên main
+chore: chuyển repo sang Nintest01/calcheck; v2.34.0
 
 Làm gì
-- popup/ai.js: thêm cờ AI_READY (đang false). Bật toggle "AI assist" chỉ hiện nhãn "Under Development",
-  không gọi AI, không so sánh; tool đọc ticket như cũ. Khi viết xong askAi() thì đổi cờ thành true.
-- CLAUDE.md mục 7: trên main, nếu version trong máy bằng version đã push (origin/main) và lần này có sửa
-  src/ hoặc manifest.json thì tự nâng số giữa (2.33.0 -> 2.34.0), một lần cho mỗi mốc push. Nhánh khác: không đổi.
+- popup/dom.js + popup.html: link kiểm tra version đổi từ YagamiDx2410/CalCheckExt sang
+  https://raw.githubusercontent.com/Nintest01/calcheck/main/manifest.json (dùng link raw, không dùng link /blob/ vì /blob/ trả về HTML nên không đọc được version).
+- manifest.json: 2.33.0 -> 2.34.0 (tự nâng trên main).
+- package.json: npm test chạy thẳng tests/core.test.js (lệnh cũ "node --test tests/" lỗi trên Node mới).
 
 Kiểm tra
-- npm test: 7/7 qua.
-- Thử popup trên trang giả lập: bật toggle hiện "Under Development", Read vẫn điền form, tắt toggle thì ẩn.
+- node --test tests/core.test.js: 7/7 qua.
 
 Chưa kiểm / lưu ý
-- Chưa chạy trong Chrome thật (cần Reload ở chrome://extensions).
-- Không đổi version: đang ở nhánh api.
-- Sau khi tự nâng version trên main mà chưa push, bước 1 sẽ báo lệch version trên máy đó.
+- Chưa chạy trong Chrome thật: Reload ở chrome://extensions rồi bấm Next ở bước 1.
+- Version local (2.34.0) đang cao hơn GitHub (2.33.0) tới khi push -> bước 1 báo lệch version trên máy này.
