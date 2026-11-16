@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { durSeconds, durVal } from "../src/core/duration.js";
 import { slashDate, normDate, parseDateParts, parseTimeToken } from "../src/core/dates.js";
 import { hasId, evLev, gluedParts, splitTagTokens } from "../src/core/ids.js";
-import { cmpExact, cmpDuration, flagRuleChecks } from "../src/core/compare.js";
+import { cmpExact, cmpDuration, flagRuleChecks, kmTagFormatCheck } from "../src/core/compare.js";
 import { withTerm, reportOutSize } from "../src/core/layout.js";
 import { adfPlainText } from "../src/core/adf.js";
 import { parseTicketV2 } from "../src/core/parser/index.js";
@@ -67,4 +67,11 @@ test("parser: one program with two stacked tags keeps both", async () => {
   const c = parseTicketV2(doc, { title: "iBP34 | Week 2 - Daily Login Fund 2" }).cases[0];
   assert.equal(c.tags, "tag.fund.bp34v2.daily.w2, tag.fund.bp34v2.daily.w2.gift");
   assert.equal(c.dur, "7d");
+});
+
+test("no tag in ticket: KM tags must exist and be tag.xxx", () => {
+  assert.equal(kmTagFormatCheck("tag.store.bp43, tag.x").pass, true);
+  assert.equal(kmTagFormatCheck("").pass, false);
+  assert.equal(kmTagFormatCheck("tag.a, store.b").pass, false);
+  assert.equal(kmTagFormatCheck("tag.").pass, false);
 });

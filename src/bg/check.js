@@ -5,7 +5,7 @@ import { exec, openCalendar, openProgram, sleep, waitTabComplete } from "./navig
 import { composeReport } from "./report.js";
 import { saveImage } from "./save.js";
 import { CAP, capReset } from "./state.js";
-import { adaptGlued, calendarChecks, cmpDuration, cmpDurField, cmpEndsAfter, cmpExact, cmpGlobal, cmpInField, cmpInFieldMulti, cmpRepeatEvery, cmpTagExact, cmpWhen, failLabels, failPrefix, flagRuleChecks, kvkProgramChecks, packageTagChecks, programHeader } from "../core/compare.js";
+import { adaptGlued, calendarChecks, cmpDuration, cmpDurField, cmpEndsAfter, cmpExact, cmpGlobal, cmpInField, cmpInFieldMulti, cmpRepeatEvery, cmpTagExact, cmpWhen, failLabels, failPrefix, flagRuleChecks, kmTagFormatCheck, kvkProgramChecks, packageTagChecks, programHeader } from "../core/compare.js";
 import { idMatch } from "../core/ids.js";
 import { listUrlFor } from "../core/layout.js";
 import { lc, norm } from "../core/text.js";
@@ -246,7 +246,7 @@ export async function checkOneCase(tabId, p, navUrl, navFresh) {
   cmpInFieldMulti("Calendar ID", p.calIds, "Calendar IDs", actual.calIds, [{ name: "Event IDs", val: actual.event }, { name: "Package Tags", val: actual.tags }, { name: "County Config IDs", val: actual.ccid }]).forEach(push);
   if (p.shard) push(cmpExact("Shard Tag", norm(p.shard), actual.shard));
   else if (p.shardTokens) cmpInFieldMulti("Shard Tag", p.shardTokens, "Shard Tag", actual.shard, [{ name: "Package Tags", val: actual.tags }, { name: "Event IDs", val: actual.event }]).forEach(push);
-  if (p.noteKmTags && !p.tags) checks.push({ label: "Package Tag", pass: null, bold: true, line: "Note: Package Tags not specified in the ticket \u2014 KM has: " + (norm(actual.tags) || "(none)") });
+  if (p.noteKmTags && !p.tags) checks.push(kmTagFormatCheck(actual.tags));
   if (p.unknownContent) checks.push({ label: "Content", pass: null, line: "Note: unrecognized Content type(s) \u2014 verify manually: " + p.unknownContent });
   cmpWhen(norm(p.date), norm(p.time), actual.when).forEach(push);
   const se = p.strictEmpty || [];

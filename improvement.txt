@@ -1,16 +1,16 @@
-v2.37.0: link GitHub cố định, mismatch ver thì cho tải zip mới
+v2.38.0: ticket không có Package Tag thì kiểm tra tag trên KM theo format tag.xxx
 
 Làm gì
-- popup: bỏ ô "GitHub manifest URL" (user không còn sửa được). Link kiểm tra version cố định trong popup/dom.js (GIT_MANIFEST_URL).
-- version.js: khi bản cài cũ hơn GitHub, popup "Version mismatch" có nút "Download latest (.zip)" mở
-  https://github.com/Nintest01/calcheck/archive/refs/heads/main.zip -> user tải, giải nén đè, Reload extension. Bản cài mới hơn GitHub thì ẩn nút.
-- session.js / ui.js: bỏ phần lưu / reset link GitHub cũ (không còn cần).
-- Bỏ hẳn AI assist (không dùng API Claude): xoá core/ai.js, popup/ai.js, toggle + popup "Tool vs AI" trong popup.html, các chỗ gọi trong jira.js / ui.js / session.js, test "ai assist"; CLEARABLE ghi thẳng danh sách field trong dom.js; cập nhật CLAUDE.md.
-- manifest.json: 2.36.0 -> 2.37.0 (tự nâng trên main; chưa push thì check ver báo lệch với bản trên GitHub).
+- core/compare.js: thêm kmTagFormatCheck. Ticket không ghi Package Tag -> KM phải có ít nhất 1 tag và mọi tag đều dạng tag.xxx;
+  PASS nếu đủ, FAIL nếu KM trống hoặc có tag sai format (hiện rõ tag sai). Trước đây chỉ in Note, không chấm.
+- bg/check.js: chỗ in Note "Package Tags not specified" đổi sang gọi kmTagFormatCheck.
+- Ticket có ghi tag: so sánh đúng và đủ như cũ (không đổi).
+- tests/core.test.js: thêm test kmTagFormatCheck.
+- manifest.json: 2.37.0 -> 2.38.0 (tự nâng trên main).
 
 Kiểm tra
-- npm test: 7/7 qua (bỏ test AI; test parser còn nguyên).
+- npm test: 8/8 qua. Layout ticket KM-63629 (Offer, không có tag) đọc từ Jira xác nhận không có dòng tag.
 
 Chưa kiểm / lưu ý
-- Popup cần Reload + chạy tay: đọc ticket (Read), Run check đơn / batch, Reset, Clear vẫn chạy bình thường, không còn nút AI assist.
-- Phần popup cần Reload ở chrome://extensions rồi chạy tay (bật VPN): sửa manifest local thành bản thấp hơn để thấy popup mismatch + nút tải.
+- Phần bg cần Reload + chạy tay (VPN) trên KM-63629: dòng "Package Tag: not in ticket, format check" phải PASS nếu KM có tag.xxx.
+- Áp dụng cho layout Offer và các ticket bảng có noteKmTags; case boss-spawn không đổi.
