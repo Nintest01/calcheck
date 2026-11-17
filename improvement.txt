@@ -1,25 +1,14 @@
-v2.39.0: event Blitz "x = 1, 3, 5,...23": gắn event cho từng program, hỏi xác nhận trước khi check, so flag với ticket
+v2.40.0: ticket không ghi Package Tag + program có Event (Blitz) -> không check tag trên KM
 
 Làm gì
-- core/parser/extras.js: thêm eventValues (đọc "x = 1 - 12" hoặc "x = 1, 3, 5, 7,...23"), expandEventRange (thay x trong prototype
-  ev.blitz...x.slb thành từng event), nameCycles (đọc số slot trong tên program, 01 03 ... 11 rồi lặp lại là 1 vòng/ngày).
-- core/parser/table.js: Event Prototype có chữ x + dãy giá trị -> program thứ i nhận event thứ i (theo thứ tự bảng).
-  Chốt an toàn: số giá trị của x phải bằng số program VÀ các vòng (day1, day2...) phải cùng cỡ; lệch thì không đoán,
-  báo "does not match ... enter them manually" và để trống event. Case Blitz đặt flagCmp = true (flag trên KM so với flag trong ticket).
-- popup/ui.js: batch có case Blitz thì hiện hộp xác nhận danh sách "program -> event" trước khi chạy; Cancel thì không chạy.
-- County Config v3/v4/v5 (coc.xxx): đã có sẵn (parseCountyConfig -> check riêng từng version), chỉ thêm test; ticket để trống ô này thì không check.
-- tests: fixture blitz-x-list.json (ADF KM-63664 bỏ link) + 3 test mới. manifest.json 2.38.0 -> 2.39.0 (tự nâng trên main).
+- bg/check.js: ticket không có Package Tag thì
+  * program CÓ Event ID (vd. Blitz): chỉ in Note "Package Tags not specified in the ticket - not checked; KM has: ..." (không PASS/FAIL).
+  * program KHÔNG có event (store / offer pack, vd. KM-63629): vẫn kiểm KM có tag và đúng dạng tag.xxx (như v2.38.0).
+- Nguyên nhân sửa: v2.38.0 áp luật "KM phải có tag.xxx" cho cả Blitz nên 12/12 program FAIL "KM has no Package Tag".
+- manifest.json: 2.39.0 -> 2.40.0 (tự nâng trên main).
 
 Kiểm tra
-- npm test: 11/11 qua. Parse KM-63664: 12 program <-> event 1,3,5,...,23, không cảnh báo; đổi dãy thành "1 - 12" thì ra 1..12; "1 - 11" thì cảnh báo và để trống.
+- npm test: 12/12 qua (core không đổi).
 
 Chưa kiểm / lưu ý
-- Phần popup + KM cần Reload và chạy tay (VPN): Read KM-63664 -> Run batch -> hộp xác nhận hiện đủ 12 dòng -> OK -> kiểm event/flag trên KM.
-- Chưa xác nhận KM thực sự lưu event dạng ...hf26.1.slb (số không đệm 0). Dòng Quest (x = 1 - 12) không được kiểm.
-- Ticket có thể bị sửa sau khi đọc: lần đọc đầu ghi "x = 1 - 12", sau đó đổi thành "1, 3, 5, 7,...23"; parser đọc được cả hai dạng.
-
-(thêm) County Config có Start Time / Duration riêng
-- core/parser/boss.js: parseCountyConfig đọc thêm dòng "Start Time" và "Duration" của bảng County Config (một ô gộp cho cả v3/v4/v5, hoặc mỗi version một ô) -> trả date / time / dur.
-- popup/jira.js: case spawn v3/v4/v5 dùng Start Time + Duration của bảng đó; bảng không có thì vẫn lấy lịch của program đầu như cũ.
-- tests: fixture blitz-county.json (KM-63665) + 1 test: 12 program (event 2,4,...,24) + 3 spawn cùng 11/27/2026 15:55:00 UTC, 2d 5m.
-- Kiểm tra: npm test; cần Reload + chạy tay (VPN) KM-63665: 3 dòng spawn so Date/Time/Duration với 15:55 UTC / 2d 5m.
+- Cần Reload + chạy tay lại KM-63664 (12 program không còn FAIL vì tag) và KM-63629 (vẫn kiểm tag.xxx).
