@@ -169,6 +169,10 @@ async function runSelected(restoreSel) {
     if (ok) { saveMode = "folder"; batchFolderMode = true; }
   }
 
+  // Blitz-style events (one event per program from "x = 1 - N"): the user confirms the pairs before the check
+  const seq = toRun.filter(c => c.evSeq);
+  if (seq.length && !confirm("Event for each program (assigned in ticket order):\n\n" + seq.map(c => c.progId + "  \u2192  " + c.event).join("\n") + "\n\nCorrect? OK = start the check, Cancel = stop.")) { batchFolderMode = false; return; }
+
   $("runBatch").disabled = true; $("clearBatch").disabled = true; $("backUrlB").disabled = true;
   $("batchRunning").classList.remove("hide");
   $("batchProg").textContent = "Starting\u2026";

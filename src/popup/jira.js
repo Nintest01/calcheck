@@ -58,7 +58,7 @@ async function readJira() {
               boss: true, ver: b.ver, coc: b.coc,
               calId: main.calId, progId: b.progId || b.coc, prefix: main.progId,
               mainEvent: (main.event || "").split(",")[0].trim(),
-              flag: main.flag || "", date: main.date || "", time: main.time || "", dur: main.dur || "",
+              flag: main.flag || "", date: b.date || main.date || "", time: b.time || main.time || "", dur: b.dur || main.dur || "",   // the county table's own Start Time / Duration win
               shard: b.shard || (b.ver === "v3" ? "events-v3nux-spawn" : "events-v4-spawn"),
               event: "", tags: "", pre: "", post: ""
             });

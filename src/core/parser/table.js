@@ -4,6 +4,7 @@ import { firstDate, timeOf } from "../dates.js";
 import { durVal } from "../duration.js";
 import { splitTagTokens } from "../ids.js";
 import { parseAdf } from "./legacy.js";
+import { eventValues, expandEventRange, nameCycles } from "./extras.js";
 import { pickShard, shardLetters } from "./shard.js";
 
 // ===== v2.7 unified parser: read by COLUMN LABEL, not position =====
@@ -46,7 +47,7 @@ export function parseTicketTable(doc, opts, rows) {
   const warnings = [];
 
   // 1) scalars from label|value rows (flag stays empty for KvK 'Data flag:' paragraphs)
-  let flag = ""; const evProto = []; const evSections = []; let tGlobal = "";
+  let flag = "", evRange = null; const evProto = []; const evSections = []; let tGlobal = "";
   const scalarShard = [], swIds = [];     // "Shard Tag" label row (one value cell) and "Store Windows" label row
   const evByVer = {}; let verCols = null;   // Event Prototype split per version column: { v3: [...], v4: [...] }
   rows.forEach(row => {
@@ -71,6 +72,8 @@ export function parseTicketTable(doc, opts, rows) {
         const ver1 = verCols && verCols.length === row.length ? verCols[1] : "";
         let cur = null;
         row[1].lines.forEach(ln => {
+          const rg = eventValues(ln);                    // "x = 1 - 12" / "x = 1, 3, 5, ...23"
+          if (rg && !evRange) evRange = rg;
           const hm = ln.trim().match(/^([a-z]\d{3}(?:\s*[\/,&+]\s*[a-z]\d{3})*)\s*(?:\(.*\))?\s*:?$/i);
           if (hm) { const groups = hm[1].toLowerCase().split(/\s*[,;]\s*/).map(g => g.split(/[\/&+\s]+/).filter(Boolean)).filter(g => g.length); cur = { br: [].concat.apply([], groups), groups, events: [] }; evSections.push(cur); return; }
           const mm = ln.match(/(?<![A-Za-z0-9._-])ev\.[a-z0-9._-]+/ig);
@@ -133,6 +136,16 @@ export function parseTicketTable(doc, opts, rows) {
   else progNames = cleanProgLines(PB.dataRows[0] && PB.dataRows[0][nameCi] ? PB.dataRows[0][nameCi].lines : []);
   const N = progNames.length;
   if (!N) { if (!calId) warnings.push("Calendar ID not found -- enter it manually."); return { cases: [], warnings, evProto }; }
+
+  // "x = 1 - 12" / "x = 1, 3, 5, ...23" prototype (Blitz): program i gets the i-th event. The programs' slot numbers restart in every
+  // cycle (day1 01..11, day2 01..11); the events must split into the same cycles, else nothing is guessed.
+  let evSeq = null, evSeqBad = false;
+  const tmpl = evRange && evProto.find(p => expandEventRange(p, evRange).length);
+  if (tmpl && N > 1) {
+    const seq = expandEventRange(tmpl, evRange), cyc = nameCycles(progNames);
+    if (cyc && seq.length === N && cyc.cycles * cyc.size === N) evSeq = seq;
+    else { evSeqBad = true; warnings.push("Event " + tmpl + " (" + evRange.l + " has " + seq.length + " values) does not match the " + N + " programs" + (cyc ? " (" + cyc.cycles + " cycles x " + cyc.size + ")" : " (cycles of different sizes)") + " -- events not assigned, enter them manually."); }
+  }
 
   const blockFor = (label) => { if (label in PB.idx) return PB; for (const b of blocks) if (label in b.idx) return b; return null; };
   // return program i's value list for a column in a block (row-mode OR stacked-cell mode)
@@ -343,6 +356,8 @@ export function parseTicketTable(doc, opts, rows) {
     const verKeys = Object.keys(evByVer);
     const verTok = verKeys.length ? name.toLowerCase().split(/[.\-_\s]+/).reverse().find(t => evByVer[t]) : "";
     if (verTok) ev = evByVer[verTok].slice();      // Event Prototype column of this program's version
+    else if (evSeq) ev = [evSeq[i]];
+    else if (evSeqBad) ev = [];
     else if (isMission && N > 1) {
       // mission: use the ticket's own event for this program if listed; otherwise
       // derive it from the .meta prototype (0.meta -> .meta, day1 -> .d1, ...)
@@ -418,7 +433,7 @@ export function parseTicketTable(doc, opts, rows) {
     // calendars listed in this program's ID cell (several cal-ids stacked in one cell = same program in each)
     const calList = (() => { if (!("id" in PB.idx)) return null; const c0 = PB.dataRows[multiRow ? i : 0] ? PB.dataRows[multiRow ? i : 0][PB.idx["id"]] : null; const l = c0 ? c0.lines.map(x => x.trim()).filter(x => /^cal\./i.test(x)) : []; return l.length > 1 ? l : null; })();
     cases.push({
-      calList,
+      calList, evSeq: !!evSeq, flagCmp: !!evSeq && !!flag,
       calId: cal_i, progId: name, flag: (flagB ? valuesFor(flagB, "flag", i).join(" ").trim() : "") || joinFlag || flag,
       event: uq(ev.concat(evInTags)).join(", "), tags: uq(tagInTags.concat(storeTags)).join(", "),
       cocIds: uq(cocInTags).join(", "), calIds: uq(calInTags).join(", "), unknownContent: uq(unkInTags).join(", "),

@@ -1,9 +1,11 @@
 // Boss-spawn "County Config" table (pure).
 import { adfCellLines } from "../adf.js";
+import { firstDate, timeOf } from "../dates.js";
+import { durVal } from "../duration.js";
 
 // ===== v3/v4 boss-spawn: "County Config (if Applicable)" table =====
 // The table has version columns (v3 / v4) and label rows: "ID", "County Config
-// (if Applicable)", "Shard Tag". Returns [{ver, coc, progId, shard}] per version col.
+// (if Applicable)", "Shard Tag", optional "Start Time" / "Duration". Returns [{ver, coc, progId, shard, date, time, dur}] per version col.
 export function parseCountyConfig(doc) {
   const tables = [];
   (function w(n) { if (!n) return; if (n.type === "table") tables.push(n); (n.content || []).forEach(w); })(doc);
@@ -23,6 +25,9 @@ export function parseCountyConfig(doc) {
     if (!cocRow) continue; // not the county-config table
     const idRow = rows.find(r => /^id$/i.test((r[0] || "").trim()));
     const shardRow = findRow("shard tag");
+    // optional "Start Time" / "Duration" rows: one merged cell for all versions, or one cell per version
+    const startRow = findRow("start"), durRow = findRow("duration");
+    const at = (row, ci) => !row ? "" : (row.length <= 2 ? row[1] : row[ci]) || "";
     const out = [];
     Object.keys(verCols).forEach(ciStr => {
       const ci = +ciStr, ver = verCols[ciStr];
@@ -32,7 +37,8 @@ export function parseCountyConfig(doc) {
       const cm = cocCell.match(/\b[a-z][a-z0-9]*\.[a-z0-9._-]+/i);
       if (!cm) return;
       const coc = cm[0];
-      out.push({ ver, coc, progId: idRow ? (idRow[ci] || "").trim() : "", shard: shardRow ? (shardRow[ci] || "").trim() : "" });
+      out.push({ ver, coc, progId: idRow ? (idRow[ci] || "").trim() : "", shard: shardRow ? (shardRow[ci] || "").trim() : "",
+        date: firstDate(at(startRow, ci)), time: timeOf(at(startRow, ci)), dur: durVal(at(durRow, ci)) });
     });
     if (out.length) return out;
   }
