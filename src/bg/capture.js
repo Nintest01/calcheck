@@ -50,16 +50,22 @@ async function warmShot(T) { try { await chrome.debugger.sendCommand(T, "Page.ca
 
 async function capClip(T, tabId, clip, attempt) {
   const params = { format: "png", clip: Object.assign({ scale: 1 }, clip) };   // Chrome rejects a clip without "scale"
-  let prevActive = null;
+  let prevActive = null, prevWin = null;
   if (attempt >= 2) {
     try {
       const wt = await chrome.tabs.get(tabId); const act = await chrome.tabs.query({ active: true, windowId: wt.windowId });
       if (act && act[0] && act[0].id !== tabId) prevActive = act[0].id;
       if (!wt.active) { await chrome.tabs.update(tabId, { active: true }); await sleep(450); }
+      // last try: raise the work window for an instant (covered / unfocused windows may not paint), then give focus back
+      const cur = await chrome.windows.getLastFocused();
+      if (cur && cur.id !== wt.windowId) { prevWin = cur.id; await chrome.windows.update(wt.windowId, { focused: true }); await sleep(450); }
     } catch (e) {}
   }
   try { return await chrome.debugger.sendCommand(T, "Page.captureScreenshot", params); }
-  finally { if (prevActive != null) { try { await chrome.tabs.update(prevActive, { active: true }); } catch (e) {} } }
+  finally {
+    if (prevActive != null) { try { await chrome.tabs.update(prevActive, { active: true }); } catch (e) {} }
+    if (prevWin != null) { try { await chrome.windows.update(prevWin, { focused: true }); } catch (e) {} }
+  }
 }
 
 // Evidence for the calendar row = header (Flag / Tag) stacked above the ticket's program
@@ -158,11 +164,12 @@ export async function dbgEarly(tabId) {
     if (!(await dbgAttach(tabId))) return;
     const T = { tabId };
     await sleep(900); await dbgStable(T, 2500);
-    // Lock the viewport size AND device-pixel-ratio for the whole run so layout and
-    // capture always use the same scale (a never-shown tab otherwise renders its
-    // first frame at x1 while laying out at x2 -> tiled/offset first screenshot).
-    const v = await dbgEval(T, "JSON.stringify({w:window.innerWidth,h:window.innerHeight,dpr:window.devicePixelRatio||1})");
-    if (v && v.w && v.h) {
+    // Keep painting when the window is covered / not focused (best effort, harmless if unsupported).
+    try { await chrome.debugger.sendCommand(T, "Emulation.setFocusEmulationEnabled", { enabled: true }); } catch (e) {}
+    // Lock a FIXED viewport size AND device-pixel-ratio for the whole run: the same layout and image size on every
+    // machine, whatever the real window / screen size is (and a never-shown tab otherwise renders its first
+    // frame at x1 while laying out at x2 -> tiled/offset first screenshot).
+    { const v = { w: 1366, h: 900, dpr: 2 };
       await chrome.debugger.sendCommand(T, "Emulation.setDeviceMetricsOverride", { width: v.w, height: v.h, deviceScaleFactor: v.dpr, mobile: false });
       dbgLock = { w: v.w, h: v.h, dpr: v.dpr };
       await sleep(300);
