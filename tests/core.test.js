@@ -85,6 +85,10 @@ test("blitz: x = 1, 3, 5,...23 gives program i its i-th event (2 cycles of 6)", 
   assert.equal(r.cases.length, 12); assert.deepEqual(r.warnings, []);
   assert.deepEqual(ev, ["1", "3", "5", "7", "9", "11", "13", "15", "17", "19", "21", "23"]);
   assert.ok(r.cases.every(c => c.evSeq && c.flagCmp && c.flag === "hf26-blitz-spend-resource-slb"));
+  assert.ok(r.cases.every(c => c.global === ""));                                   // no Global row in the ticket: not checked
+  const gdoc = JSON.parse(raw), cell = t => ({ type: "tableCell", content: [{ type: "paragraph", content: [{ type: "text", text: t }] }] });
+  gdoc.description.content.find(n => n.type === "table").content.push({ type: "tableRow", content: [cell("Global Event"), cell("Yes")] });
+  assert.ok(run(JSON.stringify(gdoc)).cases.every(c => c.global === "yes"));        // "Global Event | Yes" row -> every program
   const r2 = run(raw.replace("x = 1, 3, 5, 7,…23", "x = 1 - 12"));
   assert.equal(r2.cases[11].event, "ev.blitz.spend.resource.hf26.12.slb");
   const r3 = run(raw.replace("x = 1, 3, 5, 7,…23", "x = 1 - 11"));          // 11 events for 12 programs: guess nothing

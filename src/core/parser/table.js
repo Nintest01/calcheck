@@ -433,7 +433,7 @@ export function parseTicketTable(doc, opts, rows) {
     // calendars listed in this program's ID cell (several cal-ids stacked in one cell = same program in each)
     const calList = (() => { if (!("id" in PB.idx)) return null; const c0 = PB.dataRows[multiRow ? i : 0] ? PB.dataRows[multiRow ? i : 0][PB.idx["id"]] : null; const l = c0 ? c0.lines.map(x => x.trim()).filter(x => /^cal\./i.test(x)) : []; return l.length > 1 ? l : null; })();
     cases.push({
-      calList, evSeq: !!evSeq, flagCmp: !!evSeq && !!flag,
+      calList, evSeq: !!evSeq, flagCmp: !!evSeq && !!flag, global: tGlobal === "yes" ? "yes" : "",   // "Global Event | Yes" row; a per-row Global column overrides it later
       calId: cal_i, progId: name, flag: (flagB ? valuesFor(flagB, "flag", i).join(" ").trim() : "") || joinFlag || flag,
       event: uq(ev.concat(evInTags)).join(", "), tags: uq(tagInTags.concat(storeTags)).join(", "),
       cocIds: uq(cocInTags).join(", "), calIds: uq(calInTags).join(", "), unknownContent: uq(unkInTags).join(", "),

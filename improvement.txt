@@ -1,14 +1,15 @@
-v2.40.0: ticket không ghi Package Tag + program có Event (Blitz) -> không check tag trên KM
+v2.41.0: ticket có dòng "Global Event | Yes" -> check Global = Yes cho từng program
 
 Làm gì
-- bg/check.js: ticket không có Package Tag thì
-  * program CÓ Event ID (vd. Blitz): chỉ in Note "Package Tags not specified in the ticket - not checked; KM has: ..." (không PASS/FAIL).
-  * program KHÔNG có event (store / offer pack, vd. KM-63629): vẫn kiểm KM có tag và đúng dạng tag.xxx (như v2.38.0).
-- Nguyên nhân sửa: v2.38.0 áp luật "KM phải có tag.xxx" cho cả Blitz nên 12/12 program FAIL "KM has no Package Tag".
-- manifest.json: 2.39.0 -> 2.40.0 (tự nâng trên main).
+- core/parser/table.js: dòng "Global Event | Yes" (hoặc "Global | Yes") ở cấp ticket giờ được gán vào mọi program (global = "yes").
+  Trước đây chỉ cột Global theo từng hàng mới được đọc nên ticket Blitz (KM-63664 / KM-63665) không có dòng "Global: expected Yes" trong report.
+  Cột Global theo từng hàng (nếu có) vẫn ghi đè. Ticket không có dòng Global hoặc ghi No thì không check.
+- tests/core.test.js: test Blitz thêm 2 ý (không có dòng Global -> không check; thêm dòng Global Event | Yes -> 12 program đều global yes).
+- manifest.json: 2.40.0 -> 2.41.0 (tự nâng trên main).
 
 Kiểm tra
-- npm test: 12/12 qua (core không đổi).
+- npm test: qua.
 
 Chưa kiểm / lưu ý
-- Cần Reload + chạy tay lại KM-63664 (12 program không còn FAIL vì tag) và KM-63629 (vẫn kiểm tag.xxx).
+- Cần Reload + chạy tay lại KM-63664 / KM-63665 (VPN): report phải có dòng "Global: expected Yes | actual ..." (PASS nếu KM hiện Yes).
+- Chỉ áp dụng cho ticket đọc bằng bộ đọc bảng thường; ticket KvK vẫn giữ luật cũ (Global chỉ khi có event).
