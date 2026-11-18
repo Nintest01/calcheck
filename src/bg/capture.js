@@ -56,9 +56,6 @@ async function capClip(T, tabId, clip, attempt) {
       const wt = await chrome.tabs.get(tabId); const act = await chrome.tabs.query({ active: true, windowId: wt.windowId });
       if (act && act[0] && act[0].id !== tabId) prevActive = act[0].id;
       if (!wt.active) { await chrome.tabs.update(tabId, { active: true }); await sleep(450); }
-      // last try: raise the work window for an instant (covered / unfocused windows may not paint), then give focus back
-      const cur = await chrome.windows.getLastFocused();
-      if (cur && cur.id !== wt.windowId) { prevWin = cur.id; await chrome.windows.update(wt.windowId, { focused: true }); await sleep(450); }
     } catch (e) {}
   }
   try { return await chrome.debugger.sendCommand(T, "Page.captureScreenshot", params); }

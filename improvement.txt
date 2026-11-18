@@ -1,19 +1,14 @@
-v2.42.0: tab làm việc mở trong cửa sổ Chrome riêng để chụp ảnh không hỏng khi bạn mở trang khác
+v2.43.0: 1 màn hình -> tab nền như cũ; 2+ màn hình -> cửa sổ riêng ở màn hình kia
 
 Làm gì
-- bg/navigate.js: ensureWorkTab mở trang KM trong cửa sổ popup riêng (không giành focus)
-  thay vì tab nền trong cửa sổ của bạn. Tab nền bị che thì Chrome không vẽ, chụp ảnh lỗi / rỗng; tab trong cửa sổ riêng luôn là tab đang hiện.
-  Tab cũ còn sống thì chỉ đổi url; bị đóng thì mở cửa sổ mới.
-- bg/capture.js (capClip, lần thử cuối): đưa cửa sổ làm việc lên trước một lúc để chụp rồi trả focus về cửa sổ trước đó.
-- Cửa sổ làm việc nhỏ (480x320): 1 màn hình -> góc dưới phải; 2+ màn hình -> màn hình khác màn đang dùng (chrome.system.display).
-- bg/capture.js (dbgEarly): khóa cố định viewport 1366 rộng + DPR 2 (không theo cỡ cửa sổ/màn hình) -> ảnh giống nhau mọi máy;
-  bật Emulation.setFocusEmulationEnabled để vẫn vẽ khi cửa sổ bị che / không focus (chưa kiểm thực tế).
-- popup.html: dòng cảnh báo khi đang chạy: đừng thu nhỏ / che cửa sổ nhỏ của CalCheck.
-- manifest.json: 2.41.0 -> 2.42.0 (tự nâng trên main); thêm quyền system.display (Chrome có thể hỏi lại quyền khi Reload).
+- bg/navigate.js: ensureWorkTab: có từ 2 màn hình -> mở cửa sổ riêng (tối đa 1366x900) ở màn hình KHÁC màn đang dùng, không giành focus;
+  chỉ 1 màn hình -> tab nền (active:false) trong cửa sổ hiện tại như bản cũ. Bỏ cửa sổ nhỏ 480x320 ở góc (bị app khác che là lỗi chụp).
+- bg/capture.js: bỏ bước raise cửa sổ ở lần chụp cuối; khóa cố định viewport 1366 + DPR 2; bật setFocusEmulationEnabled.
+- popup.html: dòng nhắc: đừng đóng tab/cửa sổ CalCheck; 1 màn hình thì tool có thể đưa tab lên trước chốc lát để chụp.
+- manifest.json: 2.42.0 -> 2.43.0 (tự nâng trên main).
 
 Kiểm tra
-- node --check 2 file qua; chạy thử ensureWorkTab trong Node với chrome giả: lần 1 tạo cửa sổ, lần 2 dùng lại tab, tab mất thì tạo cửa sổ mới.
+- node --check qua.
 
 Chưa kiểm / lưu ý
-- Phải Reload + chạy tay (VPN). Cửa sổ riêng sẽ hiện trên màn hình lúc chạy (không có focus); đóng khi chạy xong.
-- Chưa kiểm: che cửa sổ làm việc bằng app khác vẫn có thể lỗi chụp; cần thử các tình huống ở danh sách kiểm tra.
+- Cần Reload + chạy tay: 1 màn hình (tab nền) và 2 màn hình (cửa sổ ở màn kia). 1 màn hình vẫn có thể lỗi chụp nếu tab nền bị ẩn.
