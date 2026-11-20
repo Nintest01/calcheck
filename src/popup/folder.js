@@ -38,12 +38,13 @@ export async function loadDir() {
 
 export async function ensureDirPermission() {
   if (!dirHandle) return false;
+  try { if ((await dirHandle.queryPermission({ mode: "readwrite" })) === "granted") return true; } catch (e) {}
+  // Chrome forgot the write permission: ask again where to save (a fresh pick is a fresh grant), starting in the old folder
   try {
-    const q = await dirHandle.queryPermission({ mode: "readwrite" });
-    if (q === "granted") return true;
-    const r = await dirHandle.requestPermission({ mode: "readwrite" }); // needs user gesture
-    return r === "granted";
-  } catch (e) { return false; }
+    const h = await window.showDirectoryPicker({ mode: "readwrite", startIn: dirHandle });
+    dirHandle = h; await idbSet("saveDir", h); updateLocUI();
+    return true;
+  } catch (e) { return false; }   // cancelled / no user gesture -> caller falls back to Downloads/CalCheck
 }
 
 export async function writeToDir(handle, baseName, dataUrl) {

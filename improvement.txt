@@ -1,16 +1,12 @@
-v2.44.0: Package Tag không có trong ticket -> chỉ kiểm khi KM có tag; thêm dòng CAL cho 'Target calendar shard tag'
+v2.45.0: Chrome quên quyền thư mục lưu -> hỏi chọn lại thư mục khi bấm chạy
 
 Làm gì
-- core/compare.js kmTagFormatCheck: KM không có tag -> không kiểm, không hiện dòng. KM có tag -> Note 'KM has: ...'; sai dạng tag.xxx -> ❌ báo lỗi.
-  (KM-63837: battlepass/glorymission/kvk trước đây FAIL 'KM has no Package Tag'.)
-- bg/check.js: bỏ qua dòng Package Tag khi null; nhánh event cũng bỏ qua khi KM trống.
-- core/parser/table.js: chỉ khi TIÊU ĐỀ ticket có 'calendar'; dòng 'Target calendar shard tag / Shard target: X' phía trên bảng -> mỗi calendar trong bảng thêm 1 dòng CAL: chụp trang calendar (ảnh mặc định)
-  và so Tag trên KM với X (KM-63837: cal.bp.generic, events-rps; 1 CAL + 5 program).
-- tests/core.test.js: cập nhật case + thêm case 'Target calendar shard tag'.
-- manifest.json: 2.43.0 -> 2.44.0 (tự nâng trên main).
+- popup/folder.js ensureDirPermission: không còn quyền ghi -> mở lại hộp chọn thư mục (bắt đầu ở thư mục cũ), lưu thư mục mới;
+  hủy hộp chọn thì lưu vào Downloads/CalCheck như cũ.
+- manifest.json: 2.44.0 -> 2.45.0 (tự nâng trên main).
 
 Kiểm tra
-- npm test.
+- node --check popup/folder.js.
 
 Chưa kiểm / lưu ý
-- Reload + chạy lại KM-63837 (CAL row: Tag events-rps; program không tag -> không FAIL) và KM-63629 (KM có tag).
+- Cần Reload + chạy tay. Nếu log vẫn báo 'folder permission is prompt' sau khi chọn lại -> quyền không áp sang trang nền ghi file; khi đó chuyển sang thư mục con trong Downloads.
