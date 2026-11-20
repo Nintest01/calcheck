@@ -1,7 +1,7 @@
 // Popup entry: buttons, run check / batch, render results, resume a background run.
 import "./jira.js";   // registers the "Read Jira" button
 import { $, DEFAULT_URL, esc, FIELDS } from "./dom.js";
-import { dirHandle, ensureDirPermission, loadDir, writeToDir } from "./folder.js";
+import { dirHandle, ensureDirPermission, loadDir, refreshPending, writeToDir } from "./folder.js";
 import { batchCases, batchSel, caseKey, clearData, enterBatchMode, enterSingleMode, failedKeys, lastSummary, loadState, manualTagList, restoredSession, saveState, selectedCases, sessionTicket, setBatchCases, setBatchSel, setLastSummary, setRestoredSession, setSessionTicket, setSingleExtras, show, singleExtras, ticketKey, updateBatchUi, updateTagsNote } from "./session.js";
 import { versionGate } from "./version.js";
 
@@ -80,6 +80,7 @@ $("doCheck").onclick = async () => {
 };
 
 function renderResult(res) {
+  refreshPending(true);
   if (!res) res = { status: "ERROR", message: "No response." };
   if (res.status !== "DONE") {
     $("formErr").textContent = res.message || (res.step ? ("Error at step " + res.step) : "An error occurred.");
@@ -196,6 +197,7 @@ async function runSelected(restoreSel) {
 $("runBatch").onclick = () => runSelected();
 
 function showBatchResult(res, saveMode) {
+  refreshPending(true);
   const rows = (res.summary || []).map(r => { const c = Object.assign({}, r); delete c.imageDataUrl; return c; });
   const ran = new Set(rows.map(caseKey));
   const order = {}; batchCases.forEach((c, i) => { order[caseKey(c)] = i; });

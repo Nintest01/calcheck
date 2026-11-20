@@ -10,7 +10,7 @@ export function capReset() { CAP = { method: "", tries: 0, reason: "", img: "", 
 
 export function progressNote(note) {
   try { if (RUN && RUN.progress) RUN.progress.note = note; } catch (e) {}
-  try { chrome.runtime.sendMessage({ type: "batchProgress", i: CUR.i, n: CUR.n, progId: CUR.progId, phase: "running", note }); } catch (e) {}
+  try { chrome.runtime.sendMessage({ type: "batchProgress", i: CUR.i, n: CUR.n, progId: CUR.progId, phase: "running", note }).catch(() => {}); } catch (e) {}
 }
 
 // ---- setters: an imported binding is read-only, so other modules assign through these ----

@@ -34,7 +34,32 @@ function updateLocUI() {
 export async function loadDir() {
   try { const h = await idbGet("saveDir"); if (h) { dirHandle = h; } } catch (e) {}
   updateLocUI();
+  refreshPending(true);
 }
+
+// images the background could not write (no folder permission there) wait in IndexedDB until the popup writes them
+async function pendingKeys() { try { return (await idb("readonly", s => s.getAllKeys())).filter(k => String(k).indexOf("pend:") === 0); } catch (e) { return []; } }
+
+export async function refreshPending(auto) {
+  const ks = await pendingKeys();
+  $("pendBar").classList.toggle("hide", !ks.length);
+  $("pendTxt").textContent = ks.length + " screenshot" + (ks.length === 1 ? "" : "s") + " waiting to be saved to your folder.";
+  if (ks.length && auto && dirHandle) { try { if ((await dirHandle.queryPermission({ mode: "readwrite" })) === "granted") await flushPending(); } catch (e) {} }
+}
+
+async function flushPending() {
+  let n = 0;
+  for (const k of await pendingKeys()) {
+    try { const v = await idbGet(k); if (v && v.dataUrl) { await writeToDir(dirHandle, v.name, v.dataUrl); n++; } await idbDel(k); } catch (e) { break; }
+  }
+  await refreshPending(false);
+  if (n) $("locHint").textContent = "\u2705 Saved " + n + " waiting screenshot" + (n === 1 ? "" : "s") + " to " + dirHandle.name + ".";
+}
+
+$("pendSave").onclick = async () => {
+  if (!dirHandle || !(await ensureDirPermission())) { $("locHint").textContent = "Choose the folder first (Choose folder\u2026)."; return; }
+  await flushPending();
+};
 
 export async function ensureDirPermission() {
   if (!dirHandle) return false;

@@ -87,7 +87,7 @@ async function runBatch(payload) {
     setCUR({ i: i + 1, n: cases.length, progId: c.progId });
     // progress ping to popup (best-effort)
     RUN.progress = { i: i + 1, n: cases.length, progId: c.progId, phase: "running" };
-    try { chrome.runtime.sendMessage({ type: "batchProgress", i: i + 1, n: cases.length, progId: c.progId, phase: "running" }); } catch (e) {}
+    try { chrome.runtime.sendMessage({ type: "batchProgress", i: i + 1, n: cases.length, progId: c.progId, phase: "running" }).catch(() => {}); } catch (e) {}
 
     // reuse the same calendar's program list when calId unchanged: close modal instead of full reload
     let res;
@@ -116,7 +116,7 @@ async function runBatch(payload) {
     if (row.status === "DONE" && !row.savedAs && !row.imageDataUrl) notify("CalCheck \u2014 screenshot failed", "No screenshot saved for " + row.progId + " (see log).");
     // stream the finished case (incl. image for folder-mode writing in popup)
     RUN.progress = { i: i + 1, n: cases.length, progId: c.progId, phase: "done" };
-    try { chrome.runtime.sendMessage({ type: "batchProgress", i: i + 1, n: cases.length, progId: c.progId, phase: "done", row }); } catch (e) {}
+    try { chrome.runtime.sendMessage({ type: "batchProgress", i: i + 1, n: cases.length, progId: c.progId, phase: "done", row }).catch(() => {}); } catch (e) {}
   }
 
   const pass = summary.filter(r => r.overall === "PASS").length;

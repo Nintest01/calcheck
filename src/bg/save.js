@@ -44,6 +44,19 @@ async function ensureOffscreen() {
 
 export async function closeOffscreen() { try { if (chrome.offscreen.hasDocument && await chrome.offscreen.hasDocument()) await chrome.offscreen.closeDocument(); } catch (e) {} }
 
+function stashPending(name, dataUrl) {
+  return new Promise(resolve => {
+    const open = indexedDB.open("calcheck", 1);
+    open.onupgradeneeded = () => { if (!open.result.objectStoreNames.contains("kv")) open.result.createObjectStore("kv"); };
+    open.onerror = () => resolve(false);
+    open.onsuccess = () => {
+      const tx = open.result.transaction("kv", "readwrite");
+      tx.objectStore("kv").put({ name, dataUrl }, "pend:" + Date.now() + ":" + name);
+      tx.oncomplete = () => resolve(true); tx.onerror = () => resolve(false);
+    };
+  });
+}
+
 export async function saveImage(p, baseName, dataUrl) {
   const base = safeName(baseName) || "calcheck";
   if (p.saveMode === "folder") {
@@ -53,6 +66,12 @@ export async function saveImage(p, baseName, dataUrl) {
       catch (e) { r = { ok: false, reason: String((e && e.message) || e) }; }
     }
     if (r && r.ok) return { savedAs: r.name + "  ->  " + r.folder + " (chosen folder)", fallback: false };
+    // the background writer has no write permission (a grant given in the popup does not carry over): keep the image
+    // and let the popup write it into the chosen folder (banner "waiting to be saved", one click)
+    if (await stashPending(base + ".png", dataUrl)) {
+      if (CAP) CAP.notes.push("folder write failed (" + ((r && r.reason) || "offscreen writer unavailable") + ") -> kept; open CalCheck and click Save to folder");
+      return { savedAs: base + ".png  ->  (waiting: open CalCheck, click \"Save to folder\")", fallback: false };
+    }
     if (CAP) CAP.notes.push("folder write failed (" + ((r && r.reason) || "offscreen writer unavailable") + ") -> saved to Downloads/CalCheck");
   }
   const fname = "CalCheck/" + base + ".png";
