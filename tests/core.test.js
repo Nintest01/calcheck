@@ -70,9 +70,9 @@ test("parser: one program with two stacked tags keeps both", async () => {
   assert.equal(c.dur, "7d");
 });
 
-test("no tag in ticket: KM tags must exist and be tag.xxx", () => {
-  assert.equal(kmTagFormatCheck("tag.store.bp43, tag.x").pass, true);
-  assert.equal(kmTagFormatCheck("").pass, false);
+test("no tag in ticket: KM empty = no check; KM tags noted, FAIL only on wrong format", () => {
+  assert.equal(kmTagFormatCheck(""), null);
+  const ok = kmTagFormatCheck("tag.store.bp43, tag.x"); assert.equal(ok.pass, null); assert.ok(/KM has: tag\.store\.bp43/.test(ok.line));
   assert.equal(kmTagFormatCheck("tag.a, store.b").pass, false);
   assert.equal(kmTagFormatCheck("tag.").pass, false);
 });
@@ -121,4 +121,19 @@ test("county config: Start Time / Duration rows (one merged cell) are the spawn'
   assert.ok(b.every(x => x.date === "11/27/2026" && x.time === "15:55:00 UTC" && x.dur === "2d 5m"));
   const r = parseTicketV2(j.description, { title: j.summary });
   assert.equal(r.cases.length, 12); assert.deepEqual(r.warnings, []); assert.equal(r.cases[10].event, "ev.blitz.pve.armies.hf26.22.slb");   // x = 2, 4, ...24
+});
+
+test("'Target calendar shard tag' line: one CAL row per calendar in the table, with that Tag", () => {
+  const cell = t => ({ type: "tableCell", content: [{ type: "paragraph", content: t ? [{ type: "text", text: t }] : [] }] });
+  const row = (...c) => ({ type: "tableRow", content: c.map(cell) });
+  const para = t => ({ type: "paragraph", content: [{ type: "text", text: t }] });
+  const doc = { type: "doc", content: [para("Target calendar shard tag: events-rps"), { type: "table", content: [
+    row("Calendar ID", "Eligible Shards", "Shard Tags", "Program ID", "Content", "Type", "Start Time"),
+    row("cal.bp.generic", "b077", "season1-m2", "b077.season1m2.battlepass", "cal.bp.33", "Calendar IDs", "11/26/2026, 00:00:00 UTC"),
+    row("cal.bp.generic", "b077", "season1-m2", "b077.season1m2.kvk", "cal.onboard.kvk", "Calendar IDs", "12/17/2026, 00:00:00 UTC")] }] };
+  const cs = parseTicketV2(doc, { title: "Seasonal Calendar for b077" }).cases;
+  assert.equal(parseTicketV2(doc, { title: "Battle pass fund" }).cases.filter(c => c.calCheck).length, 0);   // title without "calendar": no CAL row
+  const cal = cs.filter(c => c.calCheck);
+  assert.equal(cal.length, 1); assert.equal(cal[0].calId, "cal.bp.generic"); assert.equal(cal[0].expTag, "events-rps");
+  assert.equal(cs.filter(c => !c.calCheck).length, 2);
 });

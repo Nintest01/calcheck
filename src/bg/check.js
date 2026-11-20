@@ -248,7 +248,10 @@ export async function checkOneCase(tabId, p, navUrl, navFresh) {
   else if (p.shardTokens) cmpInFieldMulti("Shard Tag", p.shardTokens, "Shard Tag", actual.shard, [{ name: "Package Tags", val: actual.tags }, { name: "Event IDs", val: actual.event }]).forEach(push);
   // no Package Tag in the ticket: an event program (it has Event IDs) only gets a note; a program without events
   // (store / offer pack) must still have tag.xxx tags on KM
-  if (p.noteKmTags && !p.tags) checks.push(p.event ? { label: "Package Tag", pass: null, bold: true, line: "Note: Package Tags not specified in the ticket \u2014 not checked; KM has: " + (norm(actual.tags) || "(none)") } : kmTagFormatCheck(actual.tags));
+  if (p.noteKmTags && !p.tags) {
+    const tg = p.event ? (norm(actual.tags) ? { label: "Package Tag", pass: null, bold: true, line: "Note: Package Tags not specified in the ticket \u2014 not checked; KM has: " + norm(actual.tags) } : null) : kmTagFormatCheck(actual.tags);
+    if (tg) checks.push(tg);
+  }
   if (p.unknownContent) checks.push({ label: "Content", pass: null, line: "Note: unrecognized Content type(s) \u2014 verify manually: " + p.unknownContent });
   cmpWhen(norm(p.date), norm(p.time), actual.when).forEach(push);
   const se = p.strictEmpty || [];

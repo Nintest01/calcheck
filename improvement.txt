@@ -1,14 +1,16 @@
-v2.43.0: 1 màn hình -> tab nền như cũ; 2+ màn hình -> cửa sổ riêng ở màn hình kia
+v2.44.0: Package Tag không có trong ticket -> chỉ kiểm khi KM có tag; thêm dòng CAL cho 'Target calendar shard tag'
 
 Làm gì
-- bg/navigate.js: ensureWorkTab: có từ 2 màn hình -> mở cửa sổ riêng (tối đa 1366x900) ở màn hình KHÁC màn đang dùng, không giành focus;
-  chỉ 1 màn hình -> tab nền (active:false) trong cửa sổ hiện tại như bản cũ. Bỏ cửa sổ nhỏ 480x320 ở góc (bị app khác che là lỗi chụp).
-- bg/capture.js: bỏ bước raise cửa sổ ở lần chụp cuối; khóa cố định viewport 1366 + DPR 2; bật setFocusEmulationEnabled.
-- popup.html: dòng nhắc: đừng đóng tab/cửa sổ CalCheck; 1 màn hình thì tool có thể đưa tab lên trước chốc lát để chụp.
-- manifest.json: 2.42.0 -> 2.43.0 (tự nâng trên main).
+- core/compare.js kmTagFormatCheck: KM không có tag -> không kiểm, không hiện dòng. KM có tag -> Note 'KM has: ...'; sai dạng tag.xxx -> ❌ báo lỗi.
+  (KM-63837: battlepass/glorymission/kvk trước đây FAIL 'KM has no Package Tag'.)
+- bg/check.js: bỏ qua dòng Package Tag khi null; nhánh event cũng bỏ qua khi KM trống.
+- core/parser/table.js: chỉ khi TIÊU ĐỀ ticket có 'calendar'; dòng 'Target calendar shard tag / Shard target: X' phía trên bảng -> mỗi calendar trong bảng thêm 1 dòng CAL: chụp trang calendar (ảnh mặc định)
+  và so Tag trên KM với X (KM-63837: cal.bp.generic, events-rps; 1 CAL + 5 program).
+- tests/core.test.js: cập nhật case + thêm case 'Target calendar shard tag'.
+- manifest.json: 2.43.0 -> 2.44.0 (tự nâng trên main).
 
 Kiểm tra
-- node --check qua.
+- npm test.
 
 Chưa kiểm / lưu ý
-- Cần Reload + chạy tay: 1 màn hình (tab nền) và 2 màn hình (cửa sổ ở màn kia). 1 màn hình vẫn có thể lỗi chụp nếu tab nền bị ẩn.
+- Reload + chạy lại KM-63837 (CAL row: Tag events-rps; program không tag -> không FAIL) và KM-63629 (KM có tag).

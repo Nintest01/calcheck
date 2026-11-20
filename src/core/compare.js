@@ -258,12 +258,13 @@ export function packageTagChecks(p, actual) {
   });
 }
 
-// ticket lists no Package Tag: KM must still have at least one, and each must look like tag.xxx
+// ticket lists no Package Tag: KM empty -> null (nothing to check); KM has tags -> note them, FAIL only on a wrong format (need tag.xxx)
 export function kmTagFormatCheck(kmTags) {
-  const toks = splitCsv(kmTags), bad = toks.filter(t => !/^tag\.[^\s,;]+$/i.test(t));
-  const ok = toks.length > 0 && !bad.length;
-  const why = !toks.length ? "KM has no Package Tag" : bad.length ? "wrong format (need tag.xxx): " + bad.join(", ") : "KM has " + toks.join(", ");
-  return { label: "Package Tag", pass: ok, bold: true, line: (ok ? "\u2705 " : "\u274C ") + "Package Tag: not in ticket, format check \u2014 " + why };
+  const toks = splitCsv(kmTags);
+  if (!toks.length) return null;
+  const bad = toks.filter(t => !/^tag\.[^\s,;]+$/i.test(t));
+  if (bad.length) return { label: "Package Tag", pass: false, bold: true, line: "\u274C Package Tag: not in ticket, KM has wrong format (need tag.xxx): " + bad.join(", ") };
+  return { label: "Package Tag", pass: null, bold: true, line: "Note: Package Tag not in ticket \u2014 KM has: " + toks.join(", ") };
 }
 
 // KvK calendar-grouped programs: event placement, Global (when it has events), events note

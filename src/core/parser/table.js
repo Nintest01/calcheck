@@ -473,6 +473,15 @@ export function parseTicketTable(doc, opts, rows) {
     cases.length = 0; out.forEach(x => cases.push(x));
     warnings.push("Calendar fan-out: " + order.length + " calendars \u00D7 " + nProg + " program" + (nProg === 1 ? "" : "s") + " = " + out.length + " checks (same event / tag / flag / schedule in every calendar).");
   } else cases.forEach(c => { delete c.calList; });
+  // "Target calendar shard tag: events-rps" (a line above the table): each calendar named in the table gets a CAL row
+  // so its Tag is read on the calendar page (one screenshot) and compared with that value
+  // only for tickets whose title says Calendar; the line may read "Target calendar shard tag", "Shard target", "Target shard tag"
+  if (!calHeader && !cases.some(c => c.calCheck) && /calend[ae]r/i.test((opts && opts.title) || "")) {
+    const tg = adfPlainText(doc).match(/(?:target\s+calendar\s+shard\s+tag|calendar\s+shard\s+tag|target\s+shard(?:\s+tag)?|shard\s+target)\s*:\s*([a-z0-9]+(?:[-.][a-z0-9]+)*)/i);
+    const cals = [];
+    cases.forEach(c => { if (c.calId && cals.indexOf(c.calId) < 0 && cals.map(x => x.toLowerCase()).indexOf(c.calId.toLowerCase()) < 0) cals.push(c.calId); });
+    if (tg && cals.length) calHeader = cals.map(x => ({ calId: x, tag: tg[1] }));
+  }
   if (calHeader) {
     const brOf = (cal) => (cal.toLowerCase().match(/(?<![a-z0-9])[a-z]\d{3}(?![a-z0-9])/g) || []).map(x => x.toUpperCase()).join("/");
     const out = [];
