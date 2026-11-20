@@ -63,13 +63,10 @@ $("pendSave").onclick = async () => {
 
 export async function ensureDirPermission() {
   if (!dirHandle) return false;
-  try { if ((await dirHandle.queryPermission({ mode: "readwrite" })) === "granted") return true; } catch (e) {}
-  // Chrome forgot the write permission: ask again where to save (a fresh pick is a fresh grant), starting in the old folder
   try {
-    const h = await window.showDirectoryPicker({ mode: "readwrite", startIn: dirHandle });
-    dirHandle = h; await idbSet("saveDir", h); updateLocUI();
-    return true;
-  } catch (e) { return false; }   // cancelled / no user gesture -> caller falls back to Downloads/CalCheck
+    if ((await dirHandle.queryPermission({ mode: "readwrite" })) === "granted") return true;
+    return (await dirHandle.requestPermission({ mode: "readwrite" })) === "granted";   // Chrome's Allow prompt; needs a user gesture
+  } catch (e) { return false; }
 }
 
 export async function writeToDir(handle, baseName, dataUrl) {

@@ -34,7 +34,7 @@ export function buildLog(ticket, rows) {
 }
 
 // ---- saving: chosen folder via the offscreen writer (no popup needed); Downloads fallback
-async function ensureOffscreen() {
+export async function ensureOffscreen() {
   try {
     if (chrome.offscreen.hasDocument && await chrome.offscreen.hasDocument()) return true;
     await chrome.offscreen.createDocument({ url: chrome.runtime.getURL("src/offscreen.html"), reasons: ["BLOBS"], justification: "Write evidence screenshots into the folder the user chose." });

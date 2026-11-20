@@ -1,15 +1,14 @@
-v2.46.0: ảnh không ghi được vào thư mục chỉ định -> giữ lại, 1 click lưu từ popup
+v2.48.0: kiểm tra quyền thư mục lưu ngay khi bấm Next
 
 Làm gì
-- Nguyên nhân: quyền ghi thư mục cấp ở popup không áp sang trang nền (offscreen) nên ghi 'folder permission is prompt' rồi rơi vào Downloads.
-- bg/save.js: ghi offscreen thất bại -> giữ ảnh trong IndexedDB (khóa pend:*) thay vì đẩy vào Downloads.
-- popup/folder.js + popup.html + ui.js: thanh 'N screenshot(s) waiting to be saved to your folder' + nút 'Save to folder'; mở popup / chạy xong tự lưu
-  nếu đã có quyền, nếu chưa thì bấm nút (xin quyền / chọn lại thư mục) rồi ghi vào đúng thư mục.
-- bg/run.js, bg/state.js: gửi tiến độ tới popup đã đóng thì bị 'Could not establish connection. Receiving end does not exist' (lỗi vô hại ở trang Errors) -> thêm .catch(() => {}).
-- manifest.json: 2.45.0 -> 2.46.0 (tự nâng trên main).
+- popup/ui.js: bấm Next ở bước 1 -> nếu đã chọn thư mục lưu thì kiểm quyền ghi; mất quyền thì Chrome hiện hộp Allow (requestPermission, cần click của user).
+  Không cho phép: hiện cảnh báo 'screenshots will go to Downloads/CalCheck', bấm Next lần nữa thì đi tiếp.
+- popup/folder.js ensureDirPermission: về lại queryPermission -> requestPermission (hộp Allow); bỏ việc tự mở hộp chọn thư mục của v2.45.0.
+- manifest.json: 2.47.0 -> 2.48.0 (tự nâng trên main).
 
 Kiểm tra
-- node --check; npm test.
+- node --check.
 
 Chưa kiểm / lưu ý
-- Cần Reload + chạy tay: ảnh tới đúng thư mục sau khi bấm Save to folder? Sửa 5 file (save.js, folder.js, ui.js, popup.html, improvement).
+- Cần Reload + chạy tay: mở popup (sau khi khởi động lại Chrome) -> Next -> có hộp Allow không; Allow xong chạy thì ảnh vào đúng thư mục.
+- v2.47.0 (offscreen mở sớm) chưa push, đi cùng bản này.

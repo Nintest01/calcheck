@@ -8,7 +8,11 @@ import { versionGate } from "./version.js";
 let lastLogText = "";
 
 // ---------- steps ----------
-$("toForm").onclick = async () => { const u = $("url").value.trim(); if (!u) { $("url").focus(); return; } saveState(); if (!(await versionGate())) return; show("form"); $("jiraLink").focus(); };
+let permWarned = false;   // warn once if the folder permission is refused, then let Next through (Downloads/CalCheck is used)
+$("toForm").onclick = async () => { const u = $("url").value.trim(); if (!u) { $("url").focus(); return; } saveState();
+  // check the save-folder permission right away (this click is the user gesture): Chrome shows its Allow prompt if it forgot it
+  if (dirHandle && !permWarned && !(await ensureDirPermission())) { permWarned = true; $("locHint").textContent = "\u26A0 No write permission for \"" + dirHandle.name + "\" \u2014 screenshots will go to Downloads/CalCheck. Click Next again to continue anyway, or pick the folder again."; return; }
+  if (!(await versionGate())) return; show("form"); $("jiraLink").focus(); };
 
 $("backUrl").onclick = () => show("url");
 

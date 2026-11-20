@@ -9,7 +9,7 @@ import { dbgDetach, dbgEarly } from "./capture.js";
 import { checkOneCase } from "./check.js";
 import { inj_closeModal, inj_url } from "./injected.js";
 import { DESIGN_HOST, ensureWorkTab, exec, sleep, waitTabComplete } from "./navigate.js";
-import { buildLog, closeOffscreen, notify, rowHasIssue, saveLog } from "./save.js";
+import { buildLog, closeOffscreen, ensureOffscreen, notify, rowHasIssue, saveLog } from "./save.js";
 import { CUR, RUN, setCUR, setRUN } from "./state.js";
 
 async function runCheck(p) {
@@ -132,6 +132,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg && msg.action === "runCheck") {
     setRUN({ active: true, mode: "single", saveMode: (msg.payload && msg.payload.saveMode) || "downloads", progress: { phase: "running" }, result: null, at: Date.now() });
     keepAlive(true);
+    if (msg.payload && msg.payload.saveMode === "folder") ensureOffscreen();   // open the writer NOW, while the popup's folder grant is still alive
     runCheck(msg.payload).then(res => { setRUN({ active: false, mode: "single", saveMode: RUN.saveMode, progress: null, result: res, at: Date.now() }); keepAlive(false); dbgDetach(); closeOffscreen(); sendResponse(res); })
       .catch(err => { const e = { status: "ERROR", message: (err && err.message) ? err.message : String(err) }; setRUN({ active: false, mode: "single", saveMode: RUN.saveMode, progress: null, result: e, at: Date.now() }); keepAlive(false); dbgDetach(); sendResponse(e); });
     return true;
@@ -139,6 +140,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg && msg.action === "runBatch") {
     setRUN({ active: true, mode: "batch", saveMode: (msg.payload && msg.payload.saveMode) || "downloads", progress: { i: 0, n: (msg.payload && msg.payload.cases || []).length }, result: null, at: Date.now() });
     keepAlive(true);
+    if (msg.payload && msg.payload.saveMode === "folder") ensureOffscreen();   // open the writer NOW, while the popup's folder grant is still alive
     runBatch(msg.payload).then(res => { RUN.active = false; RUN.progress = null; RUN.result = res; RUN.at = Date.now(); keepAlive(false); dbgDetach(); sendResponse(res); })
       .catch(err => { const e = { status: "ERROR", message: (err && err.message) ? err.message : String(err) }; RUN.active = false; RUN.progress = null; RUN.result = e; RUN.at = Date.now(); keepAlive(false); dbgDetach(); sendResponse(e); });
     return true;
