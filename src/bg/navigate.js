@@ -33,29 +33,10 @@ export async function ensureWorkTab(navUrl) {
   let tabId = stored.workTabId;
   if (tabId != null) { try { await chrome.tabs.get(tabId); } catch (e) { tabId = null; } }
   if (tabId == null) {
-    // 2+ displays: its own window on a display other than the one you are using (always painted, nothing covers it).
-    // 1 display: a background tab in your window (a small window gets covered by your apps and the capture fails).
-    let w = null; try { w = await chrome.windows.getLastFocused(); } catch (e) {}
-    let b = null;   // work area of the other display, if any
-    try {
-      const ds = await chrome.system.display.getInfo();
-      const cx = w ? w.left + (w.width || 0) / 2 : 0, cy = w ? w.top + (w.height || 0) / 2 : 0;
-      const inside = d => cx >= d.bounds.left && cx < d.bounds.left + d.bounds.width && cy >= d.bounds.top && cy < d.bounds.top + d.bounds.height;
-      const cur = ds.find(inside) || ds[0];
-      const other = ds.find(d => d !== cur);
-      b = other ? other.workArea : null;
-    } catch (e) {}
-    if (b) {
-      const W = Math.min(1366, b.width), H = Math.min(900, b.height);
-      const win = await chrome.windows.create({ url: navUrl, type: "popup", focused: false, left: Math.round(b.left), top: Math.round(b.top), width: W, height: H });
-      tabId = win.tabs[0].id;
-      try { await chrome.windows.update(win.id, { state: "normal", left: Math.round(b.left), top: Math.round(b.top), width: W, height: H }); } catch (e) {}
-      if (w && w.id != null) { try { await chrome.windows.update(w.id, { focused: true }); } catch (e) {} }
-    } else {
-      tabId = (await chrome.tabs.create({ url: navUrl, active: false })).id;
-    }
+    // always a background tab in the window you are using (never a new window)
+    tabId = (await chrome.tabs.create({ url: navUrl, active: false })).id;
   }
-  else { await chrome.tabs.update(tabId, { url: navUrl }); }
+  else { await chrome.tabs.update(tabId, { url: navUrl, active: false }); }
   await chrome.storage.session.set({ workTabId: tabId });
   return tabId;
 }

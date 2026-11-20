@@ -1,12 +1,23 @@
-v2.49.0: ảnh tự vào thư mục chỉ định, không cần bấm Save to folder
+v2.50.0: luôn mở tab nền trong cửa sổ đang dùng, không mở cửa sổ mới
 
 Làm gì
-- bg/save.js saveImage: ghi bằng trang nền (offscreen) thất bại -> nhờ popup ghi (tin nhắn saveToFolder; popup đang giữ quyền thư mục). Popup đóng / không nhận -> mới giữ ảnh chờ.
-- popup/ui.js: nhận saveToFolder và ghi bằng writeToDir; bấm Next đã xác nhận quyền thì tự ghi luôn các ảnh đang chờ (khỏi bấm Save to folder).
-- manifest.json: 2.48.0 -> 2.49.0 (tự nâng trên main).
+- bg/navigate.js ensureWorkTab: bỏ hẳn nhánh "nhiều màn hình -> cửa sổ riêng ở màn hình khác" (v2.42-v2.49).
+  Luôn chrome.tabs.create({ active:false }) trong cửa sổ hiện tại; tab cũ còn sống thì tabs.update({ url, active:false }).
+  Bản 2.49.0 vẫn mở cửa sổ mới vì Chrome báo máy có từ 2 màn hình (có thể là màn ảo).
+- bg/capture.js capClip: bỏ biến prevWin + windows.update còn sót (mã chết sau khi bỏ cửa sổ riêng).
+- popup.html: sửa dòng đang chạy cho đúng ("background tab in this window"), bỏ câu nói về màn hình thứ hai.
+- manifest.json: bỏ quyền system.display (không còn dùng); 2.49.0 -> 2.50.0 (tự nâng trên main).
+
+Giữ lại (khác v2.41, cố ý)
+- Emulation.setFocusEmulationEnabled: tab nền vẫn vẽ khi bị ẩn -> chụp không lỗi khi bạn mở tab khác.
+- Khóa cố định viewport 1366x900 @ DPR 2: ảnh giống nhau trên mọi máy / mọi cỡ cửa sổ.
+- Banner "Save to folder" cho ảnh chưa ghi được vào thư mục (v2.46/2.49).
 
 Kiểm tra
-- node --check.
+- npm test 13/13. node --check capture.js / navigate.js.
+- Chạy ensureWorkTab trong Node với chrome giả, cố tình báo 2 màn hình: 3 lần gọi đều chỉ tabs.create / tabs.update,
+  không hề gọi windows.create. Diff với v2.41 giờ chỉ còn đúng 3 mục "Giữ lại" ở trên.
 
 Chưa kiểm / lưu ý
-- Cần Reload + chạy tay: để popup mở trong lúc chạy -> ảnh tự vào thư mục; đóng popup lúc chạy -> mở lại, bấm Next (Allow) -> ảnh chờ tự được ghi.
+- Chưa chạy trong Chrome: cần Reload rồi chạy để xác nhận không còn cửa sổ mới và ảnh vẫn đủ khi bạn mở tab khác.
+- Quyền thư mục: popup đóng lúc chạy thì ảnh vẫn phải chờ, mở popup bấm Next (Allow) hoặc Save to folder.

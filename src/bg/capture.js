@@ -50,7 +50,7 @@ async function warmShot(T) { try { await chrome.debugger.sendCommand(T, "Page.ca
 
 async function capClip(T, tabId, clip, attempt) {
   const params = { format: "png", clip: Object.assign({ scale: 1 }, clip) };   // Chrome rejects a clip without "scale"
-  let prevActive = null, prevWin = null;
+  let prevActive = null;
   if (attempt >= 2) {
     try {
       const wt = await chrome.tabs.get(tabId); const act = await chrome.tabs.query({ active: true, windowId: wt.windowId });
@@ -59,10 +59,7 @@ async function capClip(T, tabId, clip, attempt) {
     } catch (e) {}
   }
   try { return await chrome.debugger.sendCommand(T, "Page.captureScreenshot", params); }
-  finally {
-    if (prevActive != null) { try { await chrome.tabs.update(prevActive, { active: true }); } catch (e) {} }
-    if (prevWin != null) { try { await chrome.windows.update(prevWin, { focused: true }); } catch (e) {} }
-  }
+  finally { if (prevActive != null) { try { await chrome.tabs.update(prevActive, { active: true }); } catch (e) {} } }
 }
 
 // Evidence for the calendar row = header (Flag / Tag) stacked above the ticket's program
