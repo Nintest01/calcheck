@@ -1,14 +1,12 @@
-v2.48.0: kiểm tra quyền thư mục lưu ngay khi bấm Next
+v2.49.0: ảnh tự vào thư mục chỉ định, không cần bấm Save to folder
 
 Làm gì
-- popup/ui.js: bấm Next ở bước 1 -> nếu đã chọn thư mục lưu thì kiểm quyền ghi; mất quyền thì Chrome hiện hộp Allow (requestPermission, cần click của user).
-  Không cho phép: hiện cảnh báo 'screenshots will go to Downloads/CalCheck', bấm Next lần nữa thì đi tiếp.
-- popup/folder.js ensureDirPermission: về lại queryPermission -> requestPermission (hộp Allow); bỏ việc tự mở hộp chọn thư mục của v2.45.0.
-- manifest.json: 2.47.0 -> 2.48.0 (tự nâng trên main).
+- bg/save.js saveImage: ghi bằng trang nền (offscreen) thất bại -> nhờ popup ghi (tin nhắn saveToFolder; popup đang giữ quyền thư mục). Popup đóng / không nhận -> mới giữ ảnh chờ.
+- popup/ui.js: nhận saveToFolder và ghi bằng writeToDir; bấm Next đã xác nhận quyền thì tự ghi luôn các ảnh đang chờ (khỏi bấm Save to folder).
+- manifest.json: 2.48.0 -> 2.49.0 (tự nâng trên main).
 
 Kiểm tra
 - node --check.
 
 Chưa kiểm / lưu ý
-- Cần Reload + chạy tay: mở popup (sau khi khởi động lại Chrome) -> Next -> có hộp Allow không; Allow xong chạy thì ảnh vào đúng thư mục.
-- v2.47.0 (offscreen mở sớm) chưa push, đi cùng bản này.
+- Cần Reload + chạy tay: để popup mở trong lúc chạy -> ảnh tự vào thư mục; đóng popup lúc chạy -> mở lại, bấm Next (Allow) -> ảnh chờ tự được ghi.

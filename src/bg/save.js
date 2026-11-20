@@ -66,6 +66,11 @@ export async function saveImage(p, baseName, dataUrl) {
       catch (e) { r = { ok: false, reason: String((e && e.message) || e) }; }
     }
     if (r && r.ok) return { savedAs: r.name + "  ->  " + r.folder + " (chosen folder)", fallback: false };
+    // ask the popup (it holds the folder grant) to write it, if it is open
+    try {
+      const pr = await chrome.runtime.sendMessage({ type: "saveToFolder", name: base + ".png", dataUrl });
+      if (pr && pr.ok) return { savedAs: pr.name + "  ->  " + pr.folder + " (chosen folder)", fallback: false };
+    } catch (e) {}
     // the background writer has no write permission (a grant given in the popup does not carry over): keep the image
     // and let the popup write it into the chosen folder (banner "waiting to be saved", one click)
     if (await stashPending(base + ".png", dataUrl)) {

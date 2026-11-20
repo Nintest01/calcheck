@@ -12,6 +12,7 @@ let permWarned = false;   // warn once if the folder permission is refused, then
 $("toForm").onclick = async () => { const u = $("url").value.trim(); if (!u) { $("url").focus(); return; } saveState();
   // check the save-folder permission right away (this click is the user gesture): Chrome shows its Allow prompt if it forgot it
   if (dirHandle && !permWarned && !(await ensureDirPermission())) { permWarned = true; $("locHint").textContent = "\u26A0 No write permission for \"" + dirHandle.name + "\" \u2014 screenshots will go to Downloads/CalCheck. Click Next again to continue anyway, or pick the folder again."; return; }
+  if (dirHandle && permWarned === false) refreshPending(true);   // permission is confirmed: write any waiting screenshots now
   if (!(await versionGate())) return; show("form"); $("jiraLink").focus(); };
 
 $("backUrl").onclick = () => show("url");
@@ -131,6 +132,19 @@ $("batchAgain").onclick = () => { clearRun(); show("form"); enterBatchMode(batch
 
 // live progress + incremental folder-save
 let batchFolderMode = false;
+
+// the background could not write into the folder itself: write it from here (this page holds the folder grant)
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (!msg || msg.type !== "saveToFolder" || !dirHandle) return;
+  (async () => {
+    try {
+      if ((await dirHandle.queryPermission({ mode: "readwrite" })) !== "granted") { sendResponse({ ok: false }); return; }
+      const nm = await writeToDir(dirHandle, msg.name, msg.dataUrl);
+      sendResponse({ ok: true, name: nm, folder: dirHandle.name });
+    } catch (e) { sendResponse({ ok: false }); }
+  })();
+  return true;
+});
 
 chrome.runtime.onMessage.addListener((msg) => {
   if (!msg || msg.type !== "batchProgress") return;
