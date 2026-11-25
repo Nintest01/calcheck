@@ -15,8 +15,8 @@ export const DUR_RE = /duration:?\s*([0-9]+d(?:\s*[0-9]+h)?(?:\s*[0-9]+m)?|[0-9]
 export const PID_RE = /(?:program|prototype)\s*id:\s*([a-z0-9._-]+)/ig;
 
 export function parseOffer(rows, doc) {
-  const warnings = ["Offer / Store Window ticket: checks Flag, Date, Time, Duration, Repeat / Ends after (per program line) and Package Tags (when the ticket lists them). store.* items, Store Window (sw.*), prices and brackets are out of scope \u2014 verify manually."];
-  let flag = "", calId = "", swId = "";
+  const warnings = ["Offer / Store Window ticket: checks Flag (compared with the ticket when it has a Flag row), the calendar's Tag on its first page (from \"Shard Target(s)\"), Date, Time, Duration, Repeat / Ends after (per program line) and Package Tags (when the ticket lists them). store.* items, Store Window (sw.*), prices and brackets are out of scope \u2014 verify manually."];
+  let flag = "", calId = "", swId = "", calTag = "";
   const startLines = [], calCellLines = [], durCellLines = [], tagCellLines = [];
   rows.forEach(row => {
     if (row.length < 2) return;
@@ -24,6 +24,8 @@ export function parseOffer(rows, doc) {
     const cell = row[1];
     if (label === "flag" && !flag) flag = (cell.lines[0] || "").trim();
     else if (label === "store window id" && !swId) swId = (cell.lines[0] || "").trim();
+    // "Shard Target(s) | season1-m2": the Tag of the CALENDAR, checked on the calendar's first page (not on a program)
+    else if (/^shard\s*targets?$/.test(label) && !calTag) { const v = (cell.lines[0] || "").trim(); if (/^[a-z0-9][a-z0-9._-]*$/i.test(v)) calTag = v; }
     else if (label === "calendar id") { const m = cell.lines.join(" ").match(/\bcal\.[a-z0-9._-]+/i); if (m && !calId) calId = m[0]; calCellLines.push(...cell.lines); }
     else if (label === "start date") startLines.push(...cell.lines);
     else if (label === "duration") durCellLines.push(...cell.lines);
@@ -55,11 +57,17 @@ export function parseOffer(rows, doc) {
       // none in the ticket -> report KM's value as a Note (not checked)
       const lineTags = line.match(tagRe) || [];
       const tags = Array.from(new Set(lineTags.length ? lineTags : sharedTags)).join(", ");
-      cases.push({ calId, progId, flag, event: "", tags, date, time, pre: "", dur, post: "",
+      cases.push({ calId, progId, flag, flagCmp: !!flag, event: "", tags, date, time, pre: "", dur, post: "",
         repeatEvery: rep ? rep.repeatEvery : null, endsAfter: rep ? rep.endsAfter : null,
         noteKmTags: !tags, _glued: [], _evProto: [], _evTags: [] });
     }
   });
+
+  // "Shard Target" -> one CAL row: open the calendar and compare the Tag on its first page
+  if (calTag && calId && cases.length) {
+    cases.unshift({ calCheck: true, flagCmp: false, calId, progId: calId, flag: "", expTag: calTag, bracket: "",
+      evExpected: [], evStrict: false, evProgs: [], dataErrors: [], event: "", tags: "", date: "", time: "", pre: "", dur: "", post: "", strictEmpty: [], _glued: [], _evProto: [], _evTags: [] });
+  } else if (calTag && !calId) warnings.push("Shard Target \"" + calTag + "\" found but no Calendar ID \u2014 its Tag is not checked.");
 
   if (!cases.length) warnings.push("No 'program id:' / 'prototype id:' found in the ticket \u2014 enter Program ID manually.");
   else if (!cases.some(c => c.date)) warnings.push("Could not read a date from the ticket \u2014 enter Date manually.");

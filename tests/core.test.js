@@ -137,3 +137,31 @@ test("'Target calendar shard tag' line: one CAL row per calendar in the table, w
   assert.equal(cal.length, 1); assert.equal(cal[0].calId, "cal.bp.generic"); assert.equal(cal[0].expTag, "events-rps");
   assert.equal(cs.filter(c => !c.calCheck).length, 2);
 });
+
+test("offer / pack ticket: Flag is compared and 'Shard Targets' becomes the Shard Tag", () => {
+  const p = t => ({ type: "paragraph", content: t ? [{ type: "text", text: t }] : [] });
+  const cell = (...lines) => ({ type: "tableCell", content: lines.map(p) });
+  const row = (label, ...lines) => ({ type: "tableRow", content: [cell(label), cell(...lines)] });
+  const doc = { type: "doc", content: [{ type: "table", content: [
+    row("Vertical", "beq"),
+    row("Flag", "store-bp33v2-generic-token"),
+    row("Shard Targets", "season1-m2"),
+    row("Store Window ID", "sw.bp33.store.tokens"),
+    row("Start Date",
+      "Week 1: 2/5/2026 2:00 UTC, duration 23h 59m, repeat every 1 day, 4 occurences, program id: store.3.tokens.beq.wk1",
+      "Week 3: 2/19/2026 2:00 UTC, duration 4d, program id: store.3.tokens.beq.wk3"),
+    row("Calendar ID", "cal.bp.33")] }] };
+  const cs = parseTicketV2(doc, { title: "iBP33 | Relic Token pack" }).cases;
+  const cal = cs.filter(c => c.calCheck), prog = cs.filter(c => !c.calCheck);
+  // "Shard Targets" -> one CAL row: the calendar's own Tag, checked on the calendar's first page
+  assert.equal(cal.length, 1);
+  assert.equal(cal[0].calId, "cal.bp.33"); assert.equal(cal[0].expTag, "season1-m2");
+  assert.equal(cs[0], cal[0]);              // the calendar is checked first
+  assert.equal(prog.length, 2);
+  assert.ok(prog.every(c => c.flag === "store-bp33v2-generic-token" && c.flagCmp === true));   // compared, not just recorded
+  assert.ok(prog.every(c => !c.shard));     // NOT checked on each program
+  assert.deepEqual(prog.map(c => c.progId), ["store.3.tokens.beq.wk1", "store.3.tokens.beq.wk3"]);
+  assert.deepEqual(prog.map(c => c.dur), ["23h 59m", "4d"]);
+  assert.equal(prog[0].repeatEvery, 1); assert.equal(prog[0].endsAfter, 4);
+  assert.equal(prog[1].repeatEvery, null);  // repeat belongs to its own line only
+});

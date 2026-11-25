@@ -1,23 +1,17 @@
-v2.50.0: luôn mở tab nền trong cửa sổ đang dùng, không mở cửa sổ mới
+v2.51.0: ticket offer / pack -> so sánh Flag, và "Shard Target" kiểm Tag ở trang đầu calendar
 
 Làm gì
-- bg/navigate.js ensureWorkTab: bỏ hẳn nhánh "nhiều màn hình -> cửa sổ riêng ở màn hình khác" (v2.42-v2.49).
-  Luôn chrome.tabs.create({ active:false }) trong cửa sổ hiện tại; tab cũ còn sống thì tabs.update({ url, active:false }).
-  Bản 2.49.0 vẫn mở cửa sổ mới vì Chrome báo máy có từ 2 màn hình (có thể là màn ảo).
-- bg/capture.js capClip: bỏ biến prevWin + windows.update còn sót (mã chết sau khi bỏ cửa sổ riêng).
-- popup.html: sửa dòng đang chạy cho đúng ("background tab in this window"), bỏ câu nói về màn hình thứ hai.
-- manifest.json: bỏ quyền system.display (không còn dùng); 2.49.0 -> 2.50.0 (tự nâng trên main).
-
-Giữ lại (khác v2.41, cố ý)
-- Emulation.setFocusEmulationEnabled: tab nền vẫn vẽ khi bị ẩn -> chụp không lỗi khi bạn mở tab khác.
-- Khóa cố định viewport 1366x900 @ DPR 2: ảnh giống nhau trên mọi máy / mọi cỡ cửa sổ.
-- Banner "Save to folder" cho ảnh chưa ghi được vào thư mục (v2.46/2.49).
+- core/parser/offer.js: thêm flagCmp cho mỗi program -> Flag trong ticket được SO SÁNH với Flag trên KM
+  (trước đây chỉ ghi nhận, chỉ báo lỗi khi rỗng / tbd / ignore).
+- core/parser/offer.js: đọc dòng "Shard Target" / "Shard Targets" -> thêm 1 dòng CAL ở đầu danh sách:
+  mở calendar, chụp trang đầu và so Tag ở đó với giá trị trong ticket (cmpTagExact). KHÔNG kiểm Shard Tag trong từng program.
+  Có Shard Target mà thiếu Calendar ID -> chỉ cảnh báo, không kiểm.
+  (KM-63141 "iBP33 | Relic Token pack": Flag store-bp33v2-generic-token, Shard Targets season1-m2, cal.bp.33.)
+- manifest.json: 2.50.0 -> 2.51.0 (tự nâng trên main).
 
 Kiểm tra
-- npm test 13/13. node --check capture.js / navigate.js.
-- Chạy ensureWorkTab trong Node với chrome giả, cố tình báo 2 màn hình: 3 lần gọi đều chỉ tabs.create / tabs.update,
-  không hề gọi windows.create. Diff với v2.41 giờ chỉ còn đúng 3 mục "Giữ lại" ở trên.
+- npm test 14/14, thêm case dựng theo đúng cấu trúc KM-63141: 1 dòng CAL (expTag season1-m2, đứng đầu)
+  + 2 program (flagCmp=true, không có shard), duration và repeat tách theo từng dòng.
 
 Chưa kiểm / lưu ý
-- Chưa chạy trong Chrome: cần Reload rồi chạy để xác nhận không còn cửa sổ mới và ảnh vẫn đủ khi bạn mở tab khác.
-- Quyền thư mục: popup đóng lúc chạy thì ảnh vẫn phải chờ, mở popup bấm Next (Allow) hoặc Save to folder.
+- Cần Reload + chạy KM-63141 thật: phải có 1 dòng CAL kèm ảnh trang calendar, và mỗi program có dòng Flag so sánh.
